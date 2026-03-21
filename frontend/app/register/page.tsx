@@ -10,7 +10,7 @@ export default function RegisterPage() {
     phone: "",
     password: "",
     confirmPassword: "",
-    role: "" // Thêm trường role (Mặc định rỗng)
+    role: "" 
   });
   const [message, setMessage] = useState("");
 
@@ -26,7 +26,6 @@ export default function RegisterPage() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Truyền vai trò (role) xuống Backend
         body: JSON.stringify({ 
             name: formData.name, 
             username: formData.username,
@@ -100,7 +99,6 @@ export default function RegisterPage() {
                 <input type="password" name="confirmPassword" required placeholder="🔒 Nhập lại mật khẩu" className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5b51d8] outline-none text-sm bg-gray-50/50" onChange={handleChange} />
               </div>
 
-              {/* === MỤC CHỌN VAI TRÒ (MỚI THÊM) === */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Bạn là ai?</label>
                 <select name="role" onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[#5b51d8] outline-none text-sm bg-gray-50/50 font-semibold text-gray-700 cursor-pointer">

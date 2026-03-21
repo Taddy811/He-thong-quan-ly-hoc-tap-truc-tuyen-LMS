@@ -28,7 +28,8 @@ export default function InstructorDashboard() {
   // ================= STATE LỊCH SỬ ĐIỂM DANH =================
   const [historyFilterClass, setHistoryFilterClass] = useState("");
   const [historyFilterStatus, setHistoryFilterStatus] = useState("");
-  const [historyFilterDate, setHistoryFilterDate] = useState(""); 
+  const [historyStartDate, setHistoryStartDate] = useState(""); 
+  const [historyEndDate, setHistoryEndDate] = useState("");
   const [historySearch, setHistorySearch] = useState("");
 
   // ================= STATE QUẢN LÝ BUỔI HỌC =================
@@ -163,11 +164,27 @@ export default function InstructorDashboard() {
     const matchClass = historyFilterClass === "" || item.className === historyFilterClass;
     const matchStatus = historyFilterStatus === "" || item.status === historyFilterStatus;
     const matchSearch = historySearch === "" || searchString.includes(historySearch.toLowerCase());
+    
     let matchDate = true;
-    if (historyFilterDate) { const [yyyy, mm, dd] = historyFilterDate.split('-'); matchDate = item.date === `${dd}/${mm}/${yyyy}`; }
+    if (historyStartDate || historyEndDate) {
+      const [d, m, y] = item.date.split('/');
+      const itemTime = new Date(`${y}-${m}-${d}`).setHours(0,0,0,0);
+      
+      if (historyStartDate && historyEndDate) {
+        const start = new Date(historyStartDate).setHours(0,0,0,0);
+        const end = new Date(historyEndDate).setHours(23,59,59,999);
+        matchDate = itemTime >= start && itemTime <= end;
+      } else if (historyStartDate) {
+        const start = new Date(historyStartDate).setHours(0,0,0,0);
+        matchDate = itemTime >= start;
+      } else if (historyEndDate) {
+        const end = new Date(historyEndDate).setHours(23,59,59,999);
+        matchDate = itemTime <= end;
+      }
+    }
     return matchClass && matchStatus && matchSearch && matchDate;
   });
-  const clearHistoryFilters = () => { setHistoryFilterClass(""); setHistoryFilterStatus(""); setHistoryFilterDate(""); setHistorySearch(""); };
+  const clearHistoryFilters = () => { setHistoryFilterClass(""); setHistoryFilterStatus(""); setHistoryStartDate(""); setHistoryEndDate(""); setHistorySearch(""); };
 
   const histTotal = filteredHistory.length;
   const histPresent = filteredHistory.filter(x => x.status === 'Có mặt').length;
@@ -371,23 +388,23 @@ export default function InstructorDashboard() {
       <aside className="w-[260px] bg-white hidden md:flex flex-col shadow-sm z-10 shrink-0 border-r border-gray-100">
         <div className="h-16 flex items-center px-6 border-b border-gray-100"><div className="text-xl font-extrabold text-[#1e293b]">Teacher</div></div>
         <nav className="flex-1 px-4 py-6 space-y-2">
-          <button onClick={() => setActiveTab('classes')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'classes' ? 'bg-[#f0f7ff] text-[#0070f3] border-[#0070f3]' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">🏫</span> Quản lý lớp học</button>
-          <button onClick={() => setActiveTab('attendance')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'attendance' ? 'bg-[#f0f7ff] text-[#0070f3] border-[#0070f3]' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📋</span> Điểm danh</button>
-          <button onClick={() => setActiveTab('history')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'history' ? 'bg-[#f0f7ff] text-[#0070f3] border-[#0070f3]' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">🕒</span> Lịch sử điểm danh</button>
-          <button onClick={() => setActiveTab('sessions')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'sessions' ? 'bg-[#f0f7ff] text-[#0070f3] border-[#0070f3]' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📅</span> Quản lý buổi học</button>
-          <button onClick={() => setActiveTab('schedule')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'schedule' ? 'bg-[#f0f7ff] text-[#0070f3] border-[#0070f3]' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📆</span> Lịch giảng dạy</button>
+          <button onClick={() => setActiveTab('classes')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'classes' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">🏫</span> Quản lý lớp học</button>
+          <button onClick={() => setActiveTab('attendance')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'attendance' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📋</span> Điểm danh</button>
+          <button onClick={() => setActiveTab('history')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'history' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">🕒</span> Lịch sử điểm danh</button>
+          <button onClick={() => setActiveTab('sessions')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'sessions' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📅</span> Quản lý buổi học</button>
+          <button onClick={() => setActiveTab('schedule')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'schedule' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📆</span> Lịch giảng dạy</button>
         </nav>
         <div className="p-4 border-t border-gray-100"><button onClick={handleLogout} className="flex items-center gap-2 text-gray-600 hover:text-red-500 font-bold px-4 py-2 text-sm w-full">🚪 Đăng xuất</button></div>
       </aside>
 
       {/* MAIN CONTENT */}
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="h-16 bg-[#5b51d8] flex items-center justify-between px-8 shadow-sm shrink-0">
+        <header className="h-16 bg-gradient-to-r from-emerald-600 to-teal-500 flex items-center justify-between px-8 shadow-sm shrink-0">
           <h1 className="text-lg font-semibold text-white">Hệ thống Giảng viên</h1>
           <div className="text-white text-sm font-semibold flex items-center gap-2"><span>👨‍🏫 Chào thầy/cô: {user.name}</span></div>
         </header>
         
-        <div className="bg-[#6f66e0] px-8 py-2 text-white/80 text-sm flex items-center shrink-0 shadow-sm">
+        <div className="bg-emerald-500 px-8 py-2 text-white/80 text-sm flex items-center shrink-0 shadow-sm">
           <span>Dashboard</span> <span className="mx-2">/</span> 
           <span className="font-semibold text-white">
             {activeTab === 'classes' ? 'Quản lý lớp học' : activeTab === 'attendance' ? 'Điểm danh' : activeTab === 'history' ? 'Lịch sử điểm danh' : activeTab === 'sessions' ? 'Quản lý buổi học' : 'Lịch giảng dạy'}
@@ -400,12 +417,12 @@ export default function InstructorDashboard() {
           {activeTab === 'classes' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
               <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2"><span className="text-[#0070f3]">📅</span> Quản lý lớp học của tôi</h2>
+                <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2"><span className="text-emerald-600">📅</span> Quản lý lớp học của tôi</h2>
                 <div className="text-sm text-gray-500 font-semibold">Tổng số lớp: <span className="text-gray-900">{myClasses.length}</span></div>
               </div>
               <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center">
-                <div className="relative w-full md:w-1/3"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span><input type="text" placeholder="Tìm kiếm tên lớp, phòng..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-[#5b51d8] bg-white"/></div>
-                <select value={shiftFilter} onChange={(e) => setShiftFilter(e.target.value)} className="w-full md:w-1/4 border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-[#5b51d8] text-gray-600 bg-white"><option value="">Chọn ca học</option><option value="Ca 1 (07:15-09:15)">Ca 1</option><option value="Ca 2 (09:20-11:20)">Ca 2</option><option value="Ca 3 (12:00-14:00)">Ca 3</option><option value="Ca 4 (14:10-16:10)">Ca 4</option><option value="Ca 5 (16:20-18:20)">Ca 5</option><option value="Ca 6 (18:30-20:30)">Ca 6</option></select>
+                <div className="relative w-full md:w-1/3"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span><input type="text" placeholder="Tìm kiếm tên lớp, phòng..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-emerald-500 bg-white"/></div>
+                <select value={shiftFilter} onChange={(e) => setShiftFilter(e.target.value)} className="w-full md:w-1/4 border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white"><option value="">Chọn ca học</option><option value="Ca 1 (07:15-09:15)">Ca 1</option><option value="Ca 2 (09:20-11:20)">Ca 2</option><option value="Ca 3 (12:00-14:00)">Ca 3</option><option value="Ca 4 (14:10-16:10)">Ca 4</option><option value="Ca 5 (16:20-18:20)">Ca 5</option><option value="Ca 6 (18:30-20:30)">Ca 6</option></select>
                 {(searchQuery || shiftFilter) && (<button onClick={handleClearClassFilters} className="text-sm font-semibold text-red-500 hover:underline whitespace-nowrap">Xóa bộ lọc</button>)}
               </div>
               <div className="overflow-x-auto flex-1 min-h-[400px]">
@@ -420,11 +437,11 @@ export default function InstructorDashboard() {
                         <td className="px-6 py-4"><span className="px-2 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded text-xs font-semibold">{cls.subject}</span></td>
                         <td className="px-6 py-4"><span className="px-2 py-1 bg-green-50 text-green-600 border border-green-100 rounded text-xs font-semibold">{cls.major}</span></td>
                         <td className="px-6 py-4 text-gray-500"><span className="px-2 py-1 bg-yellow-50 text-yellow-600 border border-yellow-100 rounded text-xs font-semibold">{cls.shift || '-'}</span></td>
-                        <td className="px-6 py-4 text-[#5b51d8] font-semibold">{cls.scheduleDays?.join(', ') || cls.days || '-'}</td>
+                        <td className="px-6 py-4 text-emerald-600 font-semibold">{cls.scheduleDays?.join(', ') || cls.days || '-'}</td>
                         <td className="px-6 py-4 font-medium text-pink-600 bg-pink-50 border border-pink-100 px-2 py-1 rounded text-xs w-fit inline-block">{cls.room || '-'}</td>
                         <td className="px-6 py-4 text-gray-600 font-semibold">👤 {cls.students?.length || 0}/{cls.maxStudents || 0}</td>
                         <td className="px-6 py-4">{cls.startDate || '-'}</td>
-                        <td className="px-6 py-4 flex justify-center text-sm"><button onClick={() => openClassDetail(cls)} className="text-white bg-[#0070f3] px-3 py-1.5 rounded hover:bg-blue-600 font-semibold transition-colors flex items-center gap-1 shadow-sm">👁️ Chi tiết</button></td>
+                        <td className="px-6 py-4 flex justify-center text-sm"><button onClick={() => openClassDetail(cls)} className="text-white bg-emerald-600 px-3 py-1.5 rounded hover:bg-emerald-700 font-semibold transition-colors flex items-center gap-1 shadow-sm">👁️ Chi tiết</button></td>
                       </tr>
                     ))}
                     {displayedClasses.length === 0 && <tr><td colSpan={9} className="text-center py-20 text-gray-400">Không tìm thấy lớp học nào.</td></tr>}
@@ -439,12 +456,12 @@ export default function InstructorDashboard() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
               <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
                 <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><span>📋</span> Điểm danh lớp học</h2>
-                <button onClick={() => setActiveTab('history')} className="text-sm font-semibold text-gray-500 hover:text-[#0070f3] flex items-center gap-1">🕒 Xem lịch sử</button>
+                <button onClick={() => setActiveTab('history')} className="text-sm font-semibold text-gray-500 hover:text-emerald-600 flex items-center gap-1">🕒 Xem lịch sử</button>
               </div>
               <div className="p-6 bg-gray-50 border-b border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Lớp học (Của tôi):</label>
-                  <select value={attSelectedClass} onChange={(e) => handleSelectClassForAttendance(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-[#5b51d8] text-gray-700 bg-white shadow-sm">
+                  <select value={attSelectedClass} onChange={(e) => handleSelectClassForAttendance(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
                     <option value="">Chọn lớp học...</option>
                     {myClasses.map(cls => (<option key={cls._id} value={cls._id}>{cls.name} - {cls.subject}</option>))}
                   </select>
@@ -452,7 +469,7 @@ export default function InstructorDashboard() {
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Buổi học / Ngày:</label>
                   <div className="flex items-center gap-2">
-                    <select value={attSelectedDate} onChange={(e) => setAttSelectedDate(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-[#5b51d8] text-gray-700 bg-white shadow-sm">
+                    <select value={attSelectedDate} onChange={(e) => setAttSelectedDate(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
                       <option value="">Chọn buổi học/Ngày...</option>
                       {upcomingDates.map((dateStr) => (<option key={dateStr} value={dateStr}>{dateStr}</option>))}
                     </select>
@@ -473,7 +490,7 @@ export default function InstructorDashboard() {
                       <button onClick={() => handleBulkAttendance('Vắng')} className="bg-red-100 text-red-700 hover:bg-red-200 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả vắng</button>
                       <button onClick={() => handleBulkAttendance('Muộn')} className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả muộn</button>
                     </div>
-                    <button onClick={handleSaveAttendance} className="bg-[#0070f3] hover:bg-blue-600 text-white px-6 py-2 rounded-md font-bold transition-colors shadow-sm flex items-center gap-2">💾 Lưu điểm danh</button>
+                    <button onClick={handleSaveAttendance} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-md font-bold transition-colors shadow-sm flex items-center gap-2">💾 Lưu điểm danh</button>
                   </div>
                   <div className="border border-gray-200 rounded-lg overflow-hidden">
                     <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
@@ -496,7 +513,7 @@ export default function InstructorDashboard() {
                                     <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"><svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg></div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4"><input type="text" placeholder="Ghi chú..." value={item.note} onChange={(e) => handleNoteChange(index, e.target.value)} className="w-full border border-gray-200 rounded px-3 py-2 outline-none focus:border-[#5b51d8] text-sm bg-transparent"/></td>
+                                <td className="px-6 py-4"><input type="text" placeholder="Ghi chú..." value={item.note} onChange={(e) => handleNoteChange(index, e.target.value)} className="w-full border border-gray-200 rounded px-3 py-2 outline-none focus:border-emerald-500 text-sm bg-transparent"/></td>
                               </tr>
                             )
                           })
@@ -523,16 +540,35 @@ export default function InstructorDashboard() {
               </div>
               <div className="p-6 overflow-y-auto">
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                    <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Lớp học:</label><select value={historyFilterClass} onChange={(e) => setHistoryFilterClass(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#5b51d8] text-gray-700 bg-white"><option value="">Tất cả lớp học</option>{myClasses.map(cls => <option key={cls._id} value={cls.name}>{cls.name}</option>)}</select></div>
-                    <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Trạng thái:</label><select value={historyFilterStatus} onChange={(e) => setHistoryFilterStatus(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#5b51d8] text-gray-700 bg-white"><option value="">Tất cả trạng thái</option><option value="Có mặt">Có mặt</option><option value="Vắng">Vắng</option><option value="Muộn">Muộn</option></select></div>
-                    <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Thời gian:</label><input type="date" value={historyFilterDate} onChange={(e) => setHistoryFilterDate(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#5b51d8] text-gray-600 bg-white"/></div>
-                    <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Tìm kiếm:</label><div className="relative"><div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span className="text-gray-400 text-sm">🔍</span></div><input type="text" placeholder="Tên sinh viên, mã SV..." value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-[#5b51d8] bg-white text-gray-700"/></div></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Lớp học:</label><select value={historyFilterClass} onChange={(e) => setHistoryFilterClass(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white"><option value="">Tất cả lớp học</option>{myClasses.map(cls => <option key={cls._id} value={cls.name}>{cls.name}</option>)}</select></div>
+                    <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Trạng thái:</label><select value={historyFilterStatus} onChange={(e) => setHistoryFilterStatus(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white"><option value="">Tất cả trạng thái</option><option value="Có mặt">Có mặt</option><option value="Vắng">Vắng</option><option value="Muộn">Muộn</option></select></div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Thời gian (Từ - Đến):</label>
+                      <div className="flex items-center gap-2">
+                        <input type="date" value={historyStartDate} onChange={(e) => setHistoryStartDate(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" title="Từ ngày"/>
+                        <span className="text-gray-400">-</span>
+                        <input type="date" value={historyEndDate} onChange={(e) => setHistoryEndDate(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" title="Đến ngày"/>
+                      </div>
+                    </div>
                   </div>
-                  <button onClick={clearHistoryFilters} className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors w-fit mt-2"><span className="text-lg leading-none">🗑️</span> Xóa bộ lọc</button>
+                  
+                  {/* Hàng 2: Tìm kiếm và Xóa bộ lọc */}
+                  <div className="flex flex-col md:flex-row items-end justify-between gap-4 border-t border-gray-100 pt-4">
+                    <div className="w-full md:w-1/2">
+                      <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Tìm kiếm:</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span className="text-gray-400 text-sm">🔍</span></div>
+                        <input type="text" placeholder="Tên sinh viên, mã SV..." value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-emerald-500 bg-white text-gray-700"/>
+                      </div>
+                    </div>
+                    <button onClick={clearHistoryFilters} className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors w-fit mb-1">
+                      <span className="text-lg leading-none">🗑️</span> Xóa bộ lọc
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Tổng điểm danh</span><span className="text-3xl font-extrabold text-[#0070f3]">{histTotal}</span></div>
+                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Tổng điểm danh</span><span className="text-3xl font-extrabold text-emerald-600">{histTotal}</span></div>
                   <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Có mặt</span><span className="text-3xl font-extrabold text-green-500 flex items-center gap-2"><span className="bg-green-100 rounded px-1 pb-1 text-xl">✅</span> {histPresent}</span></div>
                   <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Muộn</span><span className="text-3xl font-extrabold text-yellow-500 flex items-center gap-2">🕒 {histLate}</span></div>
                   <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Vắng</span><span className="text-3xl font-extrabold text-red-500 flex items-center gap-2">❌ {histAbsent}</span></div>
@@ -545,7 +581,7 @@ export default function InstructorDashboard() {
                       </thead>
                       <tbody className="divide-y divide-gray-100">
                         {filteredHistory.length === 0 ? (
-                          <tr><td colSpan={7} className="text-center py-16 text-gray-400 font-medium">Chưa có dữ liệu điểm danh nào. Bạn hãy qua tab Điểm danh để lưu kết quả nhé!</td></tr>
+                          <tr><td colSpan={7} className="text-center py-16 text-gray-400 font-medium">Chưa có dữ liệu điểm danh nào.</td></tr>
                         ) : (
                           filteredHistory.map((item, index) => {
                             const isPresent = item.status === 'Có mặt'; const isAbsent = item.status === 'Vắng';
@@ -575,12 +611,12 @@ export default function InstructorDashboard() {
           {activeTab === 'sessions' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
               <div className="p-6 flex justify-between items-center border-b border-gray-100 bg-white">
-                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><span className="text-[#0070f3] text-2xl">📅</span> Quản lý buổi học</h2>
-                <button onClick={openAddSession} className="bg-[#0070f3] hover:bg-blue-600 text-white font-semibold py-2 px-5 rounded-md text-sm shadow-sm transition-colors">+ Thêm buổi học</button>
+                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><span className="text-emerald-600 text-2xl">📅</span> Quản lý buổi học</h2>
+                <button onClick={openAddSession} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-5 rounded-md text-sm shadow-sm transition-colors">+ Thêm buổi học</button>
               </div>
               <div className="p-6 bg-gray-50 border-b border-gray-100">
                 <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Lớp học:</label>
-                <select value={sessionSelectedClass} onChange={(e) => setSessionSelectedClass(e.target.value)} className="w-full md:w-1/2 border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-[#5b51d8] text-gray-700 bg-white shadow-sm">
+                <select value={sessionSelectedClass} onChange={(e) => setSessionSelectedClass(e.target.value)} className="w-full md:w-1/2 border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
                   <option value="">Chọn lớp học...</option>{myClasses.map(c => <option key={c._id} value={c._id}>{c.name} - {c.subject}</option>)}
                 </select>
               </div>
@@ -597,7 +633,7 @@ export default function InstructorDashboard() {
                         <div className="w-px bg-gray-200"></div>
                         <div><div className="text-2xl font-extrabold text-green-500">{sessionAttendedCount}</div><div className="text-xs text-green-600 uppercase font-semibold mt-1">Đã học</div></div>
                         <div className="w-px bg-gray-200"></div>
-                        <div><div className="text-2xl font-extrabold text-[#0070f3]">{sessionUpcomingCount}</div><div className="text-xs text-blue-600 uppercase font-semibold mt-1">Sắp tới</div></div>
+                        <div><div className="text-2xl font-extrabold text-emerald-600">{sessionUpcomingCount}</div><div className="text-xs text-emerald-600 uppercase font-semibold mt-1">Sắp tới</div></div>
                       </div>
                     </div>
                     <div className="overflow-x-auto">
@@ -624,7 +660,7 @@ export default function InstructorDashboard() {
                                     const cls = myClasses.find(c => c._id === sess.classId || c._id === sessionSelectedClass);
                                     if(cls) openClassDetail(cls);
                                   }} className="text-gray-400 hover:text-gray-600 transition-colors" title="Xem chi tiết lớp học">👁️</button>
-                                  <button onClick={() => openEditSession(sess)} className="text-gray-400 hover:text-[#5b51d8] transition-colors" title="Sửa ghi chú/trạng thái">✏️</button>
+                                  <button onClick={() => openEditSession(sess)} className="text-gray-400 hover:text-emerald-600 transition-colors" title="Sửa ghi chú/trạng thái">✏️</button>
                                   {!sess.isAuto && (
                                     <button onClick={() => deleteSession(sess.id, sess.isAuto)} className="text-gray-400 hover:text-red-500 transition-colors" title="Xóa buổi bổ sung">🗑️</button>
                                   )}
@@ -647,15 +683,15 @@ export default function InstructorDashboard() {
           {activeTab === 'schedule' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
               
-              <div className="p-6 bg-[#5b51d8] flex justify-between items-center text-white">
+              <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-500 flex justify-between items-center text-white">
                 <h2 className="text-lg font-bold flex items-center gap-2">
                   <span className="text-2xl">📆</span> Lịch giảng dạy
                 </h2>
                 <div className="flex bg-white/20 p-1 rounded-lg">
-                  <button onClick={() => setScheduleViewMode('calendar')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors flex items-center gap-2 ${scheduleViewMode === 'calendar' ? 'bg-white text-[#5b51d8] shadow-sm' : 'text-white hover:bg-white/10'}`}>
+                  <button onClick={() => setScheduleViewMode('calendar')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors flex items-center gap-2 ${scheduleViewMode === 'calendar' ? 'bg-white text-emerald-600 shadow-sm' : 'text-white hover:bg-white/10'}`}>
                     📅 Lịch
                   </button>
-                  <button onClick={() => setScheduleViewMode('list')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors flex items-center gap-2 ${scheduleViewMode === 'list' ? 'bg-white text-[#5b51d8] shadow-sm' : 'text-white hover:bg-white/10'}`}>
+                  <button onClick={() => setScheduleViewMode('list')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors flex items-center gap-2 ${scheduleViewMode === 'list' ? 'bg-white text-emerald-600 shadow-sm' : 'text-white hover:bg-white/10'}`}>
                     🗂️ Danh sách
                   </button>
                 </div>
@@ -663,7 +699,7 @@ export default function InstructorDashboard() {
 
               <div className="bg-gray-50 p-4 border-b border-gray-200 grid grid-cols-2 md:grid-cols-4 gap-4 divide-x divide-gray-200">
                 <div className="text-center px-4">
-                  <div className="text-2xl font-extrabold text-[#5b51d8] flex items-center justify-center gap-2">📚 {schedTotalClasses}</div>
+                  <div className="text-2xl font-extrabold text-emerald-600 flex items-center justify-center gap-2">📚 {schedTotalClasses}</div>
                   <div className="text-xs text-gray-500 uppercase font-bold mt-1">Lớp Đang Dạy</div>
                 </div>
                 <div className="text-center px-4">
@@ -686,14 +722,14 @@ export default function InstructorDashboard() {
                     <div>
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Khoảng thời gian:</label>
                       <div className="flex items-center gap-2">
-                        <input type="date" value={scheduleStartDate} onChange={(e) => setScheduleStartDate(e.target.value)} className="w-40 border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#5b51d8] text-gray-600 bg-white"/>
+                        <input type="date" value={scheduleStartDate} onChange={(e) => setScheduleStartDate(e.target.value)} className="w-40 border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white"/>
                         <span className="text-gray-400">→</span>
-                        <input type="date" value={scheduleEndDate} onChange={(e) => setScheduleEndDate(e.target.value)} className="w-40 border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#5b51d8] text-gray-600 bg-white"/>
+                        <input type="date" value={scheduleEndDate} onChange={(e) => setScheduleEndDate(e.target.value)} className="w-40 border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white"/>
                       </div>
                     </div>
                     <div className="w-64">
                       <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Môn học:</label>
-                      <select value={scheduleSubject} onChange={(e) => setScheduleSubject(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-[#5b51d8] text-gray-700 bg-white">
+                      <select value={scheduleSubject} onChange={(e) => setScheduleSubject(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white">
                         <option value="">Tất cả môn học</option>
                         {uniqueSubjects.map((sub, idx) => <option key={idx} value={sub}>{sub}</option>)}
                       </select>
@@ -714,7 +750,7 @@ export default function InstructorDashboard() {
                         <button onClick={handleToday} className="px-4 py-1.5 text-sm font-bold text-gray-600 border border-gray-300 rounded hover:bg-gray-100 transition-colors">Hôm nay</button>
                         <div className="flex items-center gap-2 border border-gray-300 rounded overflow-hidden">
                           <button onClick={handlePrevMonth} className="px-3 py-1.5 hover:bg-gray-100 font-bold text-gray-600 transition-colors">&lt;</button>
-                          <span className="px-4 py-1.5 font-bold text-[#5b51d8] bg-white min-w-[120px] text-center border-x border-gray-300">
+                          <span className="px-4 py-1.5 font-bold text-emerald-600 bg-white min-w-[120px] text-center border-x border-gray-300">
                             {monthNames[currentMonth]} {currentYear}
                           </span>
                           <button onClick={handleNextMonth} className="px-3 py-1.5 hover:bg-gray-100 font-bold text-gray-600 transition-colors">&gt;</button>
@@ -731,8 +767,8 @@ export default function InstructorDashboard() {
                         const isToday = new Date().getDate() === dayNum && new Date().getMonth() === currentMonth && new Date().getFullYear() === currentYear;
 
                         return (
-                          <div key={dayNum} className={`bg-white min-h-[120px] p-2 flex flex-col gap-1 transition-colors hover:bg-blue-50/30 ${isToday ? 'ring-2 ring-inset ring-[#0070f3] bg-blue-50/10' : ''}`}>
-                            <div className={`text-right text-xs font-bold mb-1 ${isToday ? 'text-[#0070f3]' : 'text-gray-400'}`}>{dayNum}</div>
+                          <div key={dayNum} className={`bg-white min-h-[120px] p-2 flex flex-col gap-1 transition-colors hover:bg-emerald-50/30 ${isToday ? 'ring-2 ring-inset ring-emerald-500 bg-emerald-50/10' : ''}`}>
+                            <div className={`text-right text-xs font-bold mb-1 ${isToday ? 'text-emerald-600' : 'text-gray-400'}`}>{dayNum}</div>
                             <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[100px] no-scrollbar">
                               {sessionsOnThisDay.map((sess, sIdx) => {
                                 let colorClass = "border-gray-400 bg-gray-50 text-gray-700";
@@ -791,7 +827,6 @@ export default function InstructorDashboard() {
                                 <td className="px-6 py-4 font-semibold text-gray-700">{sess.subject}</td>
                                 <td className="px-6 py-4 text-gray-500">{sess.note !== '-' ? sess.note : 'Không có'}</td>
                                 <td className="px-6 py-4 flex justify-center items-center gap-4">
-                                  {/* ĐÃ THÊM HÀM MỞ MODAL CHI TIẾT LỚP HỌC CHO NÚT CON MẮT */}
                                   <button onClick={() => {
                                       const cls = myClasses.find(c => c._id === sess.classId);
                                       if (cls) openClassDetail(cls);
@@ -800,7 +835,7 @@ export default function InstructorDashboard() {
                                   >
                                     👁️
                                   </button>
-                                  <button onClick={() => handleJumpToAttendance(sess)} className="bg-[#0070f3] hover:bg-blue-600 text-white px-4 py-1.5 rounded-md font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
+                                  <button onClick={() => handleJumpToAttendance(sess)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-md font-bold text-xs shadow-sm transition-colors flex items-center gap-1">
                                     ✓ Điểm danh
                                   </button>
                                 </td>
@@ -832,23 +867,23 @@ export default function InstructorDashboard() {
             <form onSubmit={handleSessionSubmit} className="p-6 space-y-5 text-sm">
               <div>
                 <label className="block text-gray-700 font-semibold mb-1">* Ngày học</label>
-                <input type="date" required value={sessionForm.dateInput} onChange={handleDateChange} className="w-full border border-gray-300 rounded-md px-3 py-2.5 outline-none focus:border-[#0070f3] text-gray-600" disabled={!isSessionEdit && editSessionId !== null}/>
-                {sessionForm.dayOfWeek && <div className="text-xs text-[#0070f3] font-semibold mt-1 flex items-center gap-1">📅 Rơi vào: {sessionForm.dayOfWeek}</div>}
+                <input type="date" required value={sessionForm.dateInput} onChange={handleDateChange} className="w-full border border-gray-300 rounded-md px-3 py-2.5 outline-none focus:border-emerald-500 text-gray-600" disabled={!isSessionEdit && editSessionId !== null}/>
+                {sessionForm.dayOfWeek && <div className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">📅 Rơi vào: {sessionForm.dayOfWeek}</div>}
               </div>
               <div>
                 <label className="block text-gray-700 font-semibold mb-1">Ghi chú</label>
-                <textarea placeholder="Nội dung buổi học, bài tập..." rows={3} value={sessionForm.note} onChange={e => setSessionForm({...sessionForm, note: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2.5 outline-none focus:border-[#0070f3]"/>
+                <textarea placeholder="Nội dung buổi học, bài tập..." rows={3} value={sessionForm.note} onChange={e => setSessionForm({...sessionForm, note: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2.5 outline-none focus:border-emerald-500"/>
               </div>
               <div>
                 <label className="block text-gray-700 font-semibold mb-1">* Trạng thái điểm danh</label>
-                <select value={sessionForm.status} onChange={e => setSessionForm({...sessionForm, status: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2.5 outline-none focus:border-[#0070f3]">
+                <select value={sessionForm.status} onChange={e => setSessionForm({...sessionForm, status: e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2.5 outline-none focus:border-emerald-500">
                   <option value="Chưa điểm danh">Chưa điểm danh</option>
                   <option value="Đã điểm danh">Đã điểm danh</option>
                 </select>
               </div>
               <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
                 <button type="button" onClick={() => setIsSessionModalOpen(false)} className="px-6 py-2.5 border border-gray-300 rounded-md font-semibold text-gray-700 hover:bg-gray-50">Huỷ</button>
-                <button type="submit" className="px-6 py-2.5 bg-[#0070f3] hover:bg-blue-600 text-white rounded-md font-semibold transition-colors">Lưu buổi học</button>
+                <button type="submit" className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md font-semibold transition-colors">Lưu buổi học</button>
               </div>
             </form>
           </div>
@@ -856,7 +891,7 @@ export default function InstructorDashboard() {
       )}
 
       {isClassDetailModalOpen && selectedClassDetail && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in fade-in duration-200 max-h-[90vh]"><div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50/50"><h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">📄 Chi tiết lớp học</h3><button onClick={() => setIsClassDetailModalOpen(false)} className="text-gray-400 hover:text-red-500 text-2xl font-bold">&times;</button></div><div className="p-8 overflow-y-auto"><h2 className="text-3xl font-bold text-[#0070f3] mb-6">{selectedClassDetail.name}</h2><div className="grid grid-cols-2 gap-y-4 gap-x-12 text-sm mb-8"><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Môn học</span><span className="font-semibold text-gray-800">{selectedClassDetail.subject}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Chuyên ngành</span><span className="px-2 py-1 bg-green-100 text-green-700 border border-green-200 rounded text-xs font-bold">{selectedClassDetail.major}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Giáo viên</span><span className="font-semibold text-gray-800 flex items-center gap-1">👤 {selectedClassDetail.instructor}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Ca học</span><span className="px-2 py-1 bg-yellow-100 text-yellow-700 border border-yellow-200 rounded text-xs font-bold">{selectedClassDetail.shift || '-'}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Ngày học</span><span className="font-bold text-green-600 flex items-center gap-1">📅 {selectedClassDetail.scheduleDays?.join(', ') || selectedClassDetail.days || '-'}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Phòng học</span><span className="px-2 py-1 bg-pink-100 text-pink-700 border border-pink-200 rounded text-xs font-bold">{selectedClassDetail.room || '-'}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Ngày bắt đầu</span><span className="font-semibold text-gray-800 flex items-center gap-1">📅 {selectedClassDetail.startDate || '-'}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Số buổi học</span><span className="px-2 py-1 bg-cyan-100 text-cyan-700 border border-cyan-200 rounded text-xs font-bold">{selectedClassDetail.totalSessions || 0} buổi</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Sĩ số</span><span className="font-bold text-[#0070f3]">{selectedClassDetail.students?.length || 0} / {selectedClassDetail.maxStudents || 0} sinh viên</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Trạng thái</span><span className={`px-2 py-1 rounded text-xs font-bold ${selectedClassDetail.status === 'Hoạt động' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>{selectedClassDetail.status}</span></div></div><div className="mb-8"><h4 className="font-bold text-gray-800 mb-2">Mô tả</h4><div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-600 text-sm">{selectedClassDetail.description || "Không có mô tả."}</div></div><div><h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">Danh sách sinh viên ({selectedClassDetail.students?.length || 0})</h4><div className="border border-gray-200 rounded-lg overflow-hidden"><div className="max-h-60 overflow-y-auto">{(!selectedClassDetail.students || selectedClassDetail.students.length === 0) ? (<div className="p-4 text-center text-gray-500 text-sm bg-gray-50">Lớp học chưa có sinh viên nào.</div>) : (<ul className="divide-y divide-gray-100">{selectedClassDetail.students.map((studentName: string, index: number) => {const studentInfo = usersData.find(u => u.name === studentName); return (<li key={index} className="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors"><div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold shrink-0">👤</div><div><div className="font-bold text-gray-800 text-sm"><span className="text-gray-400 font-normal mr-1">{index + 1}.</span> {studentName} {studentInfo?.username && <span className="ml-2 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">{studentInfo.username}</span>}</div><div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">✉️ {studentInfo?.email || "N/A"}</div></div></li>);})}</ul>)}</div></div></div></div></div></div>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col animate-in fade-in duration-200 max-h-[90vh]"><div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50/50"><h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">📄 Chi tiết lớp học</h3><button onClick={() => setIsClassDetailModalOpen(false)} className="text-gray-400 hover:text-red-500 text-2xl font-bold">&times;</button></div><div className="p-8 overflow-y-auto"><h2 className="text-3xl font-bold text-emerald-600 mb-6">{selectedClassDetail.name}</h2><div className="grid grid-cols-2 gap-y-4 gap-x-12 text-sm mb-8"><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Môn học</span><span className="font-semibold text-gray-800">{selectedClassDetail.subject}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Chuyên ngành</span><span className="px-2 py-1 bg-green-100 text-green-700 border border-green-200 rounded text-xs font-bold">{selectedClassDetail.major}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Giáo viên</span><span className="font-semibold text-gray-800 flex items-center gap-1">👤 {selectedClassDetail.instructor}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Ca học</span><span className="px-2 py-1 bg-yellow-100 text-yellow-700 border border-yellow-200 rounded text-xs font-bold">{selectedClassDetail.shift || '-'}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Ngày học</span><span className="font-bold text-green-600 flex items-center gap-1">📅 {selectedClassDetail.scheduleDays?.join(', ') || selectedClassDetail.days || '-'}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Phòng học</span><span className="px-2 py-1 bg-pink-100 text-pink-700 border border-pink-200 rounded text-xs font-bold">{selectedClassDetail.room || '-'}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Ngày bắt đầu</span><span className="font-semibold text-gray-800 flex items-center gap-1">📅 {selectedClassDetail.startDate || '-'}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Số buổi học</span><span className="px-2 py-1 bg-cyan-100 text-cyan-700 border border-cyan-200 rounded text-xs font-bold">{selectedClassDetail.totalSessions || 0} buổi</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Sĩ số</span><span className="font-bold text-emerald-600">{selectedClassDetail.students?.length || 0} / {selectedClassDetail.maxStudents || 0} sinh viên</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Trạng thái</span><span className={`px-2 py-1 rounded text-xs font-bold ${selectedClassDetail.status === 'Hoạt động' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-red-100 text-red-700 border border-red-200'}`}>{selectedClassDetail.status}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Ngày tạo</span><span className="text-gray-600 font-medium">{formatDate(selectedClassDetail.createdAt)}</span></div><div className="flex items-center justify-between border-b border-gray-100 pb-2"><span className="text-gray-500">Cập nhật lần cuối</span><span className="text-gray-600 font-medium">{formatDate(selectedClassDetail.updatedAt)}</span></div></div><div className="mb-8"><h4 className="font-bold text-gray-800 mb-2">Mô tả</h4><div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-gray-600 text-sm">{selectedClassDetail.description || "Không có mô tả."}</div></div><div><h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">Danh sách sinh viên ({selectedClassDetail.students?.length || 0})</h4><div className="border border-gray-200 rounded-lg overflow-hidden"><div className="max-h-60 overflow-y-auto">{(!selectedClassDetail.students || selectedClassDetail.students.length === 0) ? (<div className="p-4 text-center text-gray-500 text-sm bg-gray-50">Lớp học chưa có sinh viên nào.</div>) : (<ul className="divide-y divide-gray-100">{selectedClassDetail.students.map((studentName: string, index: number) => {const studentInfo = usersData.find(u => u.name === studentName); return (<li key={index} className="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors"><div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold shrink-0">👤</div><div><div className="font-bold text-gray-800 text-sm"><span className="text-gray-400 font-normal mr-1">{index + 1}.</span> {studentName} {studentInfo?.username && <span className="ml-2 px-1.5 py-0.5 bg-emerald-100 text-emerald-700 rounded text-xs">{studentInfo.username}</span>}</div><div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">✉️ {studentInfo?.email || "N/A"}</div></div></li>);})}</ul>)}</div></div></div></div></div></div>
       )}
 
     </div>
