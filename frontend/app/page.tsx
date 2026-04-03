@@ -67,7 +67,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-            <Link href="/register" className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-500 text-white hover:opacity-90 text-base font-extrabold px-8 py-4 rounded-full shadow-lg shadow-emerald-600/30 transition-all transform hover:scale-105 flex items-center justify-center gap-2">
+            <Link href="/login" className="w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-500 text-white hover:opacity-90 text-base font-extrabold px-8 py-4 rounded-full shadow-lg shadow-emerald-600/30 transition-all transform hover:scale-105 flex items-center justify-center gap-2">
               Bắt đầu ngay <span>→</span>
             </Link>
           </div>
@@ -93,7 +93,7 @@ export default function LandingPage() {
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-2xl border border-emerald-100 text-emerald-600">🎓</div>
                 <div>
-                  <div className="text-gray-900 font-extrabold text-lg">Masterclass: Trí Tuệ Nhân Tạo (AI)</div>
+                  <div className="text-gray-900 font-extrabold text-lg">Trí Tuệ Nhân Tạo (AI)</div>
                   <div className="text-gray-500 text-sm font-medium">Cấp chứng chỉ Quốc tế</div>
                 </div>
               </div>
@@ -144,15 +144,6 @@ export default function LandingPage() {
             <div>
               <div className="text-gray-900 font-extrabold text-sm">10.000+</div>
               <div className="text-gray-500 text-xs font-medium">Học viên</div>
-            </div>
-          </div>
-
-          {/* Nút lơ lửng 2 */}
-          <div className="absolute -right-8 bottom-20 bg-white border border-gray-100 px-4 py-3 rounded-2xl flex items-center gap-3 shadow-lg shadow-emerald-100/40 animate-bounce" style={{ animationDuration: '4s' }}>
-            <div className="text-2xl text-yellow-500">⭐</div>
-            <div>
-              <div className="text-gray-900 font-extrabold text-sm">4.9/5</div>
-              <div className="text-gray-500 text-xs font-medium">Đánh giá</div>
             </div>
           </div>
 

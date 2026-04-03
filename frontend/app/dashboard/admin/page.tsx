@@ -456,7 +456,6 @@ export default function AdminDashboard() {
                 <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/30 relative">
                   <div className="flex items-center gap-2 mb-3 text-emerald-700 font-semibold bg-emerald-50 w-fit px-3 py-1.5 rounded-md border border-emerald-100"><span>👤 Sinh viên:</span><span>{classForm.students.length}/{classForm.maxStudents || 0}</span></div>
                   <div className="flex gap-3 mb-3 relative z-0">
-                    <input type="text" placeholder="Paste mã SV hoặc username..." value={studentInput} onChange={e => setStudentInput(e.target.value)} className="flex-1 border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 bg-white"/>
                     <button type="button" onClick={handleAddStudent} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-md transition-colors whitespace-nowrap">+ Thêm</button>
                   </div>
                   <div className="relative mb-3">
@@ -556,7 +555,43 @@ export default function AdminDashboard() {
       )}
 
       {/* ================= CÁC MODAL ẨN KHÁC ================= */}
-      {isUserModalOpen && (<div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div className="bg-white rounded-xl shadow-2xl p-6 w-96"><h3 className="font-bold text-lg mb-4">{isUserEdit?"Sửa":"Thêm"} User</h3><form onSubmit={handleUserSubmit} className="space-y-3"><select value={userForm.role} onChange={e=>setUserForm({...userForm,role:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500"><option value="student">Học sinh</option><option value="instructor">Giảng viên</option><option value="admin">Admin</option></select>{userForm.role==='student' && <input placeholder="Chuyên ngành" value={userForm.major} onChange={e=>setUserForm({...userForm,major:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" />}<input placeholder="Họ tên" required value={userForm.name} onChange={e=>setUserForm({...userForm,name:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" /><input type="email" placeholder="Email" required disabled={isUserEdit} value={userForm.email} onChange={e=>setUserForm({...userForm,email:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" /><input type="tel" placeholder="SĐT" value={userForm.phone} onChange={e=>setUserForm({...userForm,phone:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" /><div className="flex justify-end gap-2"><button type="button" onClick={()=>setIsUserModalOpen(false)} className="border p-2 rounded">Huỷ</button><button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded">Lưu</button></div></form></div></div>)}
+      {isUserModalOpen && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-96">
+            <h3 className="font-bold text-lg mb-4">{isUserEdit?"Sửa":"Thêm"} User</h3>
+            <form onSubmit={handleUserSubmit} className="space-y-3">
+              <select value={userForm.role} onChange={e=>setUserForm({...userForm,role:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500">
+                <option value="student">Học sinh</option>
+                <option value="instructor">Giảng viên</option>
+                <option value="admin">Admin</option>
+              </select>
+              
+              {/* ĐÃ THAY ĐỔI: Chuyển input text chuyên ngành thành select dropdown */}
+              {userForm.role==='student' && (
+                <select 
+                  value={userForm.major} 
+                  onChange={e=>setUserForm({...userForm,major:e.target.value})} 
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 text-gray-700"
+                >
+                  <option value="">-- Chọn chuyên ngành --</option>
+                  {majorsData.map(m => (
+                    <option key={m._id} value={m.name}>{m.name} ({m.code})</option>
+                  ))}
+                </select>
+              )}
+              
+              <input placeholder="Họ tên" required value={userForm.name} onChange={e=>setUserForm({...userForm,name:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" />
+              <input type="email" placeholder="Email" required disabled={isUserEdit} value={userForm.email} onChange={e=>setUserForm({...userForm,email:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" />
+              <input type="tel" placeholder="SĐT" value={userForm.phone} onChange={e=>setUserForm({...userForm,phone:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" />
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={()=>setIsUserModalOpen(false)} className="border p-2 rounded">Huỷ</button>
+                <button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded">Lưu</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {isMajorModalOpen && (<div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div className="bg-white rounded-xl shadow-2xl p-6 w-96"><h3 className="font-bold text-lg mb-4">{isMajorEdit?"Sửa":"Thêm"} Ngành</h3><form onSubmit={handleMajorSubmit} className="space-y-3"><input placeholder="Mã" required value={majorForm.code} onChange={e=>setMajorForm({...majorForm,code:e.target.value.toUpperCase()})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 uppercase" disabled={isMajorEdit} /><input placeholder="Tên" required value={majorForm.name} onChange={e=>setMajorForm({...majorForm,name:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" /><div className="flex justify-end gap-2"><button type="button" onClick={()=>setIsMajorModalOpen(false)} className="border p-2 rounded">Huỷ</button><button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded">Lưu</button></div></form></div></div>)}
       {isSubjectModalOpen && (<div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div className="bg-white rounded-xl shadow-2xl p-6 w-96"><h3 className="font-bold text-lg mb-4">{isSubjectEdit?"Sửa":"Thêm"} Môn</h3><form onSubmit={handleSubjectSubmit} className="space-y-3"><input placeholder="Mã" required value={subjectForm.code} onChange={e=>setSubjectForm({...subjectForm,code:e.target.value.toUpperCase()})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 uppercase" disabled={isSubjectEdit} /><input placeholder="Tên" required value={subjectForm.name} onChange={e=>setSubjectForm({...subjectForm,name:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" /><div className="flex justify-end gap-2"><button type="button" onClick={()=>setIsSubjectModalOpen(false)} className="border p-2 rounded">Huỷ</button><button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded">Lưu</button></div></form></div></div>)}
 

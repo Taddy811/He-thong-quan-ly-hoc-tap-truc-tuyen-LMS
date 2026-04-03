@@ -319,14 +319,14 @@ export default function StudentDashboard() {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div className="p-4 border-b border-gray-100 flex justify-between items-center"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-600 text-lg">📅</div><div><h3 className="font-bold text-gray-800 text-base">Lịch học hôm nay <span className="bg-green-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-1 align-middle">{totalClassesToday}</span></h3><p className="text-xs text-gray-500 font-medium">{currentDayName}, {todayStr}</p></div></div><button onClick={() => setActiveTab('schedule')} className="text-sm font-semibold text-emerald-600 hover:underline">Xem tất cả &gt;</button></div>
                   <div className="p-4">
                     {classesToday.length === 0 ? (<div className="text-center py-10 text-gray-400 font-medium">Bạn không có ca học nào trong hôm nay. Nghỉ ngơi nhé!</div>) : (
-                      <div className="space-y-4">{classesToday.map((cls, idx) => (<div key={idx} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-emerald-600 hover:shadow-md transition-all"><div className="absolute left-0 top-0 bottom-0 w-1.5 bg-green-400"></div><div className="flex justify-between items-start ml-2"><div><h4 className="font-extrabold text-gray-800 text-base mb-2">{cls.className}</h4><div className="space-y-1.5"><div className="flex items-center gap-2 text-sm text-gray-600"><span className="text-emerald-600 text-xs">📘</span> <span className="font-medium">{cls.subject}</span></div><div className="flex items-center gap-2 text-sm text-gray-600"><span className="text-red-500 text-xs">📍</span> <span className="font-bold text-gray-700">{cls.room || 'Phòng học: Trống'}</span></div></div></div><div className="bg-gray-50 border border-gray-200 px-3 py-1 rounded-md text-xs font-bold text-gray-600">{cls.shift ? cls.shift.split(' ')[0] : 'Ca học'}</div></div></div>))}</div>
+                      <div className="space-y-4">{classesToday.map((cls, idx) => (<div key={idx} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm relative overflow-hidden group hover:border-emerald-600 hover:shadow-md transition-all"><div className="absolute left-0 top-0 bottom-0 w-1.5 bg-green-400"></div><div className="flex justify-between items-start ml-2"><div><h4 className="font-extrabold text-gray-800 text-base mb-2">{cls.className}</h4><div className="space-y-1.5"><div className="flex items-center gap-2 text-sm text-gray-600"><span className="text-emerald-600 text-xs">📘</span> <span className="font-medium">{cls.subject}</span></div><div className="flex items-center gap-2 text-sm text-gray-600"><span className="text-red-500 text-xs">📍</span> <span className="font-bold text-gray-700">{cls.room || 'Phòng học: Trống'}</span></div></div></div><div className="bg-gray-50 border border-gray-200 px-3 py-1 rounded-md text-xs font-bold text-gray-600">{cls.shift ? cls.shift.split(' (')[0] : 'Ca học'}</div></div></div>))}</div>
                     )}
                   </div>
                 </div>
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div className="p-4 border-b border-gray-100 flex justify-between items-center"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-purple-600 text-lg">🕒</div><div><h3 className="font-bold text-gray-800 text-base">Lịch học sắp tới</h3><p className="text-xs text-gray-500 font-medium">7 ngày tới</p></div></div><button onClick={() => setActiveTab('schedule')} className="text-sm font-semibold text-emerald-600 hover:underline">Xem lịch &gt;</button></div>
                   <div className="p-0">
                     {upcomingClasses.length === 0 ? (<div className="text-center py-10 text-gray-400 font-medium">Chưa có lịch học nào sắp tới.</div>) : (
-                      <ul className="divide-y divide-gray-100">{upcomingClasses.map((cls, idx) => (<li key={idx} className="p-4 hover:bg-gray-50 transition-colors flex justify-between items-center"><div><h4 className="font-bold text-gray-800 text-sm mb-1">{cls.className}</h4><div className="flex items-center gap-2 text-xs text-gray-500"><span className="text-emerald-500">📘</span> {cls.subject}</div><div className="flex items-center gap-2 text-xs text-gray-500 mt-1"><span className="text-orange-500">🕒</span> Thứ {cls.dateObj.getDay() === 0 ? 'Chủ nhật' : cls.dateObj.getDay() + 1}, {cls.date} - {cls.shift ? cls.shift.split(' ')[0] : ''}</div></div><div className="flex flex-col items-end"><span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-1 rounded text-xs font-bold mb-1">{cls.date.slice(0, 5)}</span></div></li>))}</ul>
+                      <ul className="divide-y divide-gray-100">{upcomingClasses.map((cls, idx) => (<li key={idx} className="p-4 hover:bg-gray-50 transition-colors flex justify-between items-center"><div><h4 className="font-bold text-gray-800 text-sm mb-1">{cls.className}</h4><div className="flex items-center gap-2 text-xs text-gray-500"><span className="text-emerald-500">📘</span> {cls.subject}</div><div className="flex items-center gap-2 text-xs text-gray-500 mt-1"><span className="text-orange-500">🕒</span> Thứ {cls.dateObj.getDay() === 0 ? 'Chủ nhật' : cls.dateObj.getDay() + 1}, {cls.date} - {cls.shift ? cls.shift.split(' (')[0] : ''}</div></div><div className="flex flex-col items-end"><span className="bg-emerald-50 text-emerald-600 border border-emerald-100 px-2 py-1 rounded text-xs font-bold mb-1">{cls.date.slice(0, 5)}</span></div></li>))}</ul>
                     )}
                   </div>
                 </div>
@@ -363,7 +363,7 @@ export default function StudentDashboard() {
                 <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"><div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center text-orange-500 text-sm">📱</div><h3 className="font-bold text-gray-800 text-sm">Lớp học của tôi</h3><span className="bg-orange-400 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">{myClasses.length}</span></div><button onClick={() => setActiveTab('myclasses')} className="text-xs font-semibold text-emerald-600 hover:underline">Xem tất cả &gt;</button></div>
                   <div className="p-0 max-h-[500px] overflow-y-auto">
                     {myClasses.length === 0 ? (<div className="text-center py-10 text-gray-400 text-sm font-medium">Bạn chưa tham gia lớp học nào.</div>) : (
-                      <ul className="divide-y divide-gray-100">{myClasses.map((cls, idx) => (<li key={idx} className="p-4 hover:bg-gray-50 transition-colors"><h4 className="font-bold text-gray-800 text-sm mb-1">{cls.name}</h4><div className="text-xs text-gray-500 mb-2 truncate">{cls.subject}</div><div className="flex items-center gap-2"><span className="bg-gray-100 text-gray-600 border border-gray-200 px-2 py-0.5 rounded text-[10px] font-bold">{cls.shift ? cls.shift.split(' ')[0] : 'Ca học'}</span><span className="bg-gray-100 text-gray-600 border border-gray-200 px-2 py-0.5 rounded text-[10px] font-bold">{cls.instructor}</span></div></li>))}</ul>
+                      <ul className="divide-y divide-gray-100">{myClasses.map((cls, idx) => (<li key={idx} className="p-4 hover:bg-gray-50 transition-colors"><h4 className="font-bold text-gray-800 text-sm mb-1">{cls.name}</h4><div className="text-xs text-gray-500 mb-2 truncate">{cls.subject}</div><div className="flex items-center gap-2"><span className="bg-gray-100 text-gray-600 border border-gray-200 px-2 py-0.5 rounded text-[10px] font-bold">{cls.shift ? cls.shift.split(' (')[0] : 'Ca học'}</span><span className="bg-gray-100 text-gray-600 border border-gray-200 px-2 py-0.5 rounded text-[10px] font-bold">{cls.instructor}</span></div></li>))}</ul>
                     )}
                   </div>
                 </div>
@@ -404,7 +404,7 @@ export default function StudentDashboard() {
                               <td className="px-5 py-4"><div className="font-extrabold text-gray-900 text-base">{cls.name}</div><div className="text-xs text-gray-500 mt-0.5">{cls.subject}</div></td>
                               <td className="px-5 py-4 font-medium text-pink-700"><span className="bg-pink-50 border border-pink-100 px-2.5 py-1 rounded text-xs font-semibold">{cls.room || 'N/A'}</span></td>
                               <td className="px-5 py-4 font-medium text-gray-800 flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">👤</div><span>{cls.instructor}</span></td>
-                              <td className="px-5 py-4 text-center font-bold text-orange-600"><span className="bg-orange-50 border border-orange-100 px-2 py-0.5 rounded text-xs uppercase">{cls.shift ? cls.shift.split(' ')[0] : 'N/A'}</span></td>
+                              <td className="px-5 py-4 text-center font-bold text-orange-600"><span className="bg-orange-50 border border-orange-100 px-2 py-0.5 rounded text-xs uppercase">{cls.shift ? cls.shift.split(' (')[0] : 'N/A'}</span></td>
                               <td className="px-5 py-4 font-medium text-emerald-600">📅 {cls.scheduleDays?.join(', ') || 'N/A'}</td>
                               <td className="px-5 py-4">
                                 <div className="flex items-center justify-between text-xs font-bold text-gray-600 mb-1.5"><span>{percentage.toFixed(0)}%</span><span>{progress.attended}/{progress.total} buổi</span></div>
@@ -412,7 +412,7 @@ export default function StudentDashboard() {
                               </td>
                               <td className="px-5 py-4 text-center">
                                 <button onClick={() => handleViewAttendanceDetails(cls.name)} className="bg-white border border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap mx-auto">
-                                  👁️ Xem lại điểm danh
+                                   Xem lại điểm danh
                                 </button>
                               </td>
                             </tr>
@@ -495,7 +495,7 @@ export default function StudentDashboard() {
                                     <div className="truncate opacity-80">{sess.subject}</div>
                                     <div className="mt-0.5 font-semibold flex justify-between gap-1">
                                       <span className="truncate">{sess.room || 'N/A'}</span>
-                                      <span className="whitespace-nowrap">{sess.shift ? sess.shift.split(' ')[0] : ''}</span>
+                                      <span className="whitespace-nowrap">{sess.shift ? sess.shift.split(' (')[0] : ''}</span>
                                     </div>
                                   </div>
                                 );
@@ -532,7 +532,7 @@ export default function StudentDashboard() {
                               </td>
                               <td className="px-5 py-4">
                                 <div className="flex items-center gap-1.5 mb-1">
-                                  <span className="bg-orange-50 text-orange-600 border border-orange-100 px-2.5 py-1 rounded text-xs font-semibold">{sess.shift ? sess.shift.split(' ')[0] : 'N/A'}</span>
+                                  <span className="bg-orange-50 text-orange-600 border border-orange-100 px-2.5 py-1 rounded text-xs font-semibold">{sess.shift ? sess.shift.split(' (')[0] : 'N/A'}</span>
                                   🕒 {sess.shift ? sess.shift.match(/\((.*?)\)/)?.[1] : ''}
                                 </div>
                                 <div className="text-xs font-bold text-pink-700 bg-pink-50 w-fit px-2.5 py-1 rounded border border-pink-100">📍 {sess.room || 'N/A'}</div>
@@ -588,7 +588,7 @@ export default function StudentDashboard() {
                   <div className="bg-white rounded-xl border border-gray-100 p-5 flex flex-col justify-center shadow-sm">
                     <div className="text-gray-500 font-semibold text-sm mb-2">Tổng buổi học</div>
                     <div className="text-emerald-600 font-extrabold text-3xl flex items-center gap-2">
-                      <span className="text-emerald-500 text-2xl">📄</span> {hTotalSessions}
+                      <span className="text-emerald-500 text-2xl"></span> {hTotalSessions}
                     </div>
                   </div>
                   
