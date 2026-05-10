@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Scanner } from '@yudiel/react-qr-scanner'; // Thư viện quét QR
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -12,6 +14,10 @@ export default function StudentDashboard() {
   const [myClasses, setMyClasses] = useState<any[]>([]);
   const [historyData, setHistoryData] = useState<any[]>([]);
   const [sessionsData, setSessionsData] = useState<any[]>([]);
+
+  // ================= STATE QUẢN LÝ QR =================
+  const [scanStatus, setScanStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
 
   // ================= STATE CALENDAR (TAB 1 & TAB 3) =================
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
@@ -96,6 +102,32 @@ export default function StudentDashboard() {
   const handleLogout = () => {
     localStorage.removeItem("user");
     router.push("/login");
+  };
+
+  // ================= LOGIC XỬ LÝ QUÉT QR =================
+  const handleScan = async (text: string) => {
+    if (!text || scanStatus === 'success') return; // Tránh gọi API nhiều lần nếu đã thành công
+    try {
+      const res = await fetch("/api/student/scan-qr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: text, studentName: user.name })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setScanStatus('success');
+        setMessage(`Thành công! Đã ghi nhận có mặt: ${data.className}`);
+        fetchAttendanceHistory(user.name); // Refresh lịch sử
+      } else {
+        setScanStatus('error');
+        setMessage(data.message);
+      }
+      setTimeout(() => { setScanStatus('idle'); setMessage(''); }, 3000);
+    } catch (error) {
+      setScanStatus('error');
+      setMessage("Lỗi kết nối đến máy chủ!");
+      setTimeout(() => setScanStatus('idle'), 3000);
+    }
   };
 
   // ================= LOGIC GỘP LỊCH HỌC TỰ ĐỘNG & THỦ CÔNG =================
@@ -266,6 +298,10 @@ export default function StudentDashboard() {
         <div className="h-16 flex items-center px-6 border-b border-gray-100"><div className="text-xl font-extrabold text-[#1e293b]">Student</div></div>
         <nav className="flex-1 px-4 py-6 space-y-2">
           <button onClick={() => setActiveTab('dashboard')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'dashboard' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">⏱️</span> Dashboard</button>
+          
+          {/* NÚT QUÉT QR */}
+          <button onClick={() => setActiveTab('qr-scan')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'qr-scan' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📷</span> Quét QR Điểm danh</button>
+
           <button onClick={() => setActiveTab('myclasses')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'myclasses' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">🏫</span> Lớp học của tôi</button>
           <button onClick={() => setActiveTab('schedule')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'schedule' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📅</span> Lịch học</button>
           <button onClick={() => { setActiveTab('history'); setHistoryFilterClassName(null); }} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'history' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">🕒</span> Lịch sử điểm danh</button>
@@ -286,12 +322,51 @@ export default function StudentDashboard() {
         <div className="bg-emerald-500 px-8 py-2 text-white/80 text-sm flex items-center shrink-0 shadow-sm">
           <span>Sinh viên</span> <span className="mx-2">/</span> 
           <span className="font-semibold text-white">
-            {activeTab === 'dashboard' ? 'Dashboard' : activeTab === 'myclasses' ? 'Lớp học của tôi' : activeTab === 'schedule' ? 'Lịch học' : 'Lịch sử điểm danh'}
+            {activeTab === 'dashboard' ? 'Dashboard' : activeTab === 'qr-scan' ? 'Quét QR' : activeTab === 'myclasses' ? 'Lớp học của tôi' : activeTab === 'schedule' ? 'Lịch học' : 'Lịch sử điểm danh'}
           </span>
         </div>
 
         <div className="flex-1 p-6 overflow-y-auto relative bg-[#f4f7f6]">
           
+          {/* ================= TAB: QUÉT QR ================= */}
+          {activeTab === 'qr-scan' && (
+            <div className="max-w-2xl mx-auto mt-10">
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-center">
+                  <h2 className="text-2xl font-black mb-2 flex items-center justify-center gap-2"><span>📷</span> Quét mã QR</h2>
+                  <p className="text-emerald-100 text-sm">Đưa mã QR trên màn hình của Giảng viên vào khung hình bên dưới để tự động điểm danh.</p>
+                </div>
+                
+                <div className="p-8 flex flex-col items-center">
+                  <div className="w-full max-w-sm aspect-square rounded-2xl overflow-hidden border-4 border-dashed border-emerald-500 relative bg-gray-50 flex items-center justify-center">
+                    
+                    <Scanner 
+                     onScan={(result: any) => {
+                     if (result && result.length > 0) {
+                        handleScan(result[0].rawValue); // Thư viện mới trả về 1 mảng, nên lấy phần tử đầu tiên
+                       }
+                    }} 
+                    onError={(error: any) => console.log(error?.message)}
+                    />
+                    
+                    {/* Lớp phủ báo trạng thái thành công/thất bại */}
+                    {scanStatus !== 'idle' && (
+                      <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center text-white font-bold p-6 text-center ${scanStatus === 'success' ? 'bg-green-500/95' : 'bg-red-500/95'}`}>
+                        <div className="text-6xl mb-4">{scanStatus === 'success' ? '✅' : '❌'}</div>
+                        <p className="text-lg">{message}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mt-8 text-center text-sm text-gray-500 font-medium bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <p className="mb-1">💡 Đảm bảo bạn cho phép trình duyệt truy cập <strong>Camera</strong>.</p>
+                    <p className="text-red-500">Mã QR của giảng viên sẽ thay đổi 60 giây một lần để chống gian lận.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ================= TAB 1: DASHBOARD ================= */}
           {activeTab === 'dashboard' && (
             <div className="max-w-7xl mx-auto space-y-6">
@@ -412,7 +487,7 @@ export default function StudentDashboard() {
                               </td>
                               <td className="px-5 py-4 text-center">
                                 <button onClick={() => handleViewAttendanceDetails(cls.name)} className="bg-white border border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-4 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm whitespace-nowrap mx-auto">
-                                   Xem lại điểm danh
+                                   Xem lịch sử
                                 </button>
                               </td>
                             </tr>
@@ -429,7 +504,6 @@ export default function StudentDashboard() {
           {/* ================= TAB 3: LỊCH HỌC CALENDAR & LIST ================= */}
           {activeTab === 'schedule' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full relative">
-               
                <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-t-xl flex justify-between items-center shadow-md shrink-0">
                   <h2 className="text-xl font-bold flex items-center gap-2"><span className="text-2xl">📅</span> Lịch học</h2>
                   <div className="flex bg-white/20 p-1 rounded-lg">
@@ -439,7 +513,6 @@ export default function StudentDashboard() {
               </div>
 
               <div className="bg-white p-6 rounded-b-xl shadow-sm border border-gray-200 flex-1 overflow-y-auto">
-                
                 <div className="flex flex-wrap items-center gap-4 mb-6 pb-6 border-b border-gray-100">
                     <span className="text-sm font-bold text-gray-700">Bộ lọc:</span>
                     <div className="flex items-center gap-2 bg-gray-50 rounded-md border border-gray-200">
@@ -685,7 +758,7 @@ export default function StudentDashboard() {
                               </td>
                               <td className="px-5 py-4 font-medium text-gray-800 flex items-center gap-2">
                                 <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">👤</div>
-                                <span>{item.instructor}</span>
+                                <span>{item.instructor || myClasses.find(c => c.name === item.className)?.instructor || "Giảng viên"}</span>
                               </td>
                               <td className="px-5 py-4 text-center">
                                 <span className={`inline-block px-3 py-1 rounded text-xs font-bold shadow-sm border ${isPresent ? 'bg-green-50 text-green-600 border-green-100' : isAbsent ? 'bg-red-50 text-red-600 border-red-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>

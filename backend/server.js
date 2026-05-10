@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const instructorRoutes = require('./routes/instructorRoutes');
+const studentRoutes = require('./routes/studentRoutes');
 // Tải các biến môi trường từ file .env
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use('/api/classes', require('./routes/classRoutes'));
 app.use('/api/attendance', require('./routes/attendanceRoutes'));
 app.use('/api/sessions', require('./routes/sessionRoutes'));
 app.use('/api/instructor', instructorRoutes);
+app.use('/api/student', studentRoutes);
 // 3. Kết nối với nhà kho MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ Kết nối MongoDB thành công!'))
