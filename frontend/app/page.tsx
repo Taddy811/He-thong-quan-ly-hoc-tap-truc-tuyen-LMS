@@ -33,11 +33,8 @@ export default function LandingPage() {
 
           {/* Buttons Login/Register */}
           <div className="flex items-center gap-4">
-            <Link href="/login" className="hidden md:block text-sm font-bold text-gray-700 hover:text-emerald-600 transition-colors">
+            <Link href="/login" className="bg-gradient-to-r from-emerald-600 to-teal-500 hover:opacity-90 text-white text-sm font-bold px-6 py-2.5 rounded-full shadow-md shadow-emerald-200 transition-all transform hover:scale-105">
               Đăng nhập
-            </Link>
-            <Link href="/register" className="bg-gradient-to-r from-emerald-600 to-teal-500 hover:opacity-90 text-white text-sm font-bold px-6 py-2.5 rounded-full shadow-md shadow-emerald-200 transition-all transform hover:scale-105">
-              Đăng ký miễn phí
             </Link>
           </div>
         </div>

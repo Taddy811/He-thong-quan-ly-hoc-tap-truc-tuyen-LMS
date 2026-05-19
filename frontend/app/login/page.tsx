@@ -143,7 +143,7 @@ export default function LoginPage() {
 
               <form onSubmit={handleLogin} className="space-y-5">
                 <div>
-                  <label className="block text-xs font-extrabold text-gray-700 mb-2 uppercase tracking-wide">Email hoặc Tên đăng nhập</label>
+                  <label className="block text-xs font-extrabold text-gray-700 mb-2 uppercase tracking-wide">Mã số hoặc email</label>
                   <input type="text" required value={identifier} onChange={(e) => setIdentifier(e.target.value)} placeholder="Nhập tài khoản của bạn" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-sm font-medium bg-gray-50 focus:bg-white" />
                 </div>
                 
@@ -152,18 +152,14 @@ export default function LoginPage() {
                     <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wide">Mật khẩu</label>
                     <button type="button" onClick={() => { setViewMode('forgot_email'); setForgotError(""); setForgotMessage(""); }} className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition-colors">Quên mật khẩu?</button>
                   </div>
-                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-sm font-medium tracking-widest" />
+                  <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Nhập mật khẩu của bạn" className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-50 outline-none transition-all text-sm font-medium tracking-widest" />
                 </div>
 
                 <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:opacity-90 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-600/30 disabled:opacity-70 mt-4">
                   {isLoading ? 'Đang xử lý...' : 'Đăng Nhập Ngay'}
                 </button>
               </form>
-
               <div className="mt-8 pt-6 border-t border-gray-100 text-center space-y-4">
-                <div className="text-sm font-medium text-gray-500">
-                  Chưa có tài khoản? <Link href="/register" className="font-extrabold text-emerald-600 hover:text-emerald-700 hover:underline">Đăng ký tài khoản mới</Link>
-                </div>
                 <div>
                   <Link href="/" className="text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors">← Quay lại trang chủ</Link>
                 </div>

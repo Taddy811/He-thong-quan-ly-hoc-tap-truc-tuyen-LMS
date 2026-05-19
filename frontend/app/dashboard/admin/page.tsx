@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
+import ProfileSettings from "@/components/ProfileSettings";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -284,6 +285,7 @@ export default function AdminDashboard() {
           <button onClick={() => setActiveTab('majors')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'majors' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📚</span> Quản lý chuyên ngành</button>
           <button onClick={() => setActiveTab('subjects')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'subjects' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📝</span> Quản lý môn học</button>
           <button onClick={() => setActiveTab('classes')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'classes' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">🏫</span> Quản lý lớp học</button>
+          <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'profile' ? 'bg-gray-100 text-gray-800 border-gray-800' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">⚙️</span> Thông tin cá nhân</button>
         </nav>
         <div className="p-4 border-t border-gray-100"><button onClick={handleLogout} className="flex items-center gap-2 text-gray-600 hover:text-red-500 font-bold px-4 py-2 text-sm w-full">🚪 Đăng xuất</button></div>
       </aside>
@@ -299,10 +301,8 @@ export default function AdminDashboard() {
           <span>Dashboard</span> <span className="mx-2">/</span> 
           <span className="font-semibold text-white">{activeTab === 'users' ? 'Người dùng' : activeTab === 'majors' ? 'Chuyên ngành' : activeTab === 'subjects' ? 'Môn học' : activeTab === 'classes' ? 'Lớp học' : 'Các mục khác'}</span>
         </div>
-
         <div className="flex-1 p-6 overflow-y-auto">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[500px] flex flex-col">
-            
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden min-h-[500px] flex flex-col">         
             {/* ================= TAB LỚP HỌC ================= */}
             {activeTab === 'classes' && (
               <>
@@ -442,7 +442,9 @@ export default function AdminDashboard() {
                 </div>
               </>
             )}
-
+            {/* TAB: QUẢN LÝ NGƯỜI DÙNG */}
+            {activeTab === 'profile' && <ProfileSettings />}
+            
             {/* TAB: MÔN HỌC */}
             {activeTab === 'subjects' && (
               <>
@@ -479,7 +481,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       </main>
-
+            
       {/* ================= MODAL LỚP HỌC ================= */}
       {isClassModalOpen && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">

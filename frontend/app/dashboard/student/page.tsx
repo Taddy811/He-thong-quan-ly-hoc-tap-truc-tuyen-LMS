@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Scanner } from '@yudiel/react-qr-scanner'; // Thư viện quét QR
+import ProfileSettings from "@/components/ProfileSettings";
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);

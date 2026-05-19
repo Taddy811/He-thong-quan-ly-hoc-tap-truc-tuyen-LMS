@@ -1,11 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const instructorController = require('../controllers/instructorController');
+const userController = require('../controllers/userController');
 
 // Khai báo các đường dẫn API
 router.post('/start', instructorController.startSession);
 router.get('/qr/:sessionId', instructorController.generateQR);
 router.put('/end/:sessionId', instructorController.endSession);
 router.get('/history/:instructorId', instructorController.getTeachingHistory);
+router.get('/history/:instructorId', userController.getInstructorSalaryHistory);
 
 module.exports = router;

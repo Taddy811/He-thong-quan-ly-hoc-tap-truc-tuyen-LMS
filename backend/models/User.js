@@ -16,10 +16,14 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Tự động mã hóa mật khẩu TRƯỚC khi lưu vào Database
 userSchema.pre('save', async function () {
+  // Nếu mật khẩu không bị thay đổi (ví dụ chỉ cập nhật tên) thì bỏ qua không mã hóa lại
   if (!this.isModified('password')) return;
+  
+  // Tiến hành mã hóa mật khẩu thô từ controller gửi sang 1 lần duy nhất
   const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypts.hash(this.password, salt);
+  this.password = await bcrypt.hash(this.password, salt); 
 });
 
 module.exports = mongoose.model('User', userSchema);

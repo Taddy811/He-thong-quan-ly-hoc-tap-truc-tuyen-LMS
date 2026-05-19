@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from 'qrcode.react';
+import ProfileSettings from "@/components/ProfileSettings";
 
 export default function InstructorDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -21,12 +22,6 @@ export default function InstructorDashboard() {
   const [shiftFilter, setShiftFilter] = useState("");
   const [isClassDetailModalOpen, setIsClassDetailModalOpen] = useState(false);
   const [selectedClassDetail, setSelectedClassDetail] = useState<any>(null);
-
-  // ================= STATE CHẤM CÔNG (MỚI TÁCH) =================
-  const [teachingClassId, setTeachingClassId] = useState("");
-  const [currentTeachingSession, setCurrentTeachingSession] = useState<any>(null);
-  const [isStartingSession, setIsStartingSession] = useState(false);
-  const [elapsedDisplay, setElapsedDisplay] = useState("00:00");
 
   // ================= STATE ĐIỂM DANH =================
   const [attSelectedClass, setAttSelectedClass] = useState("");
@@ -62,18 +57,18 @@ export default function InstructorDashboard() {
   // ================= STATE LƯƠNG =================
   const [salaryHistory, setSalaryHistory] = useState<any[]>([]);
 
-  // ================= ĐẾM NGƯỢC QR CODE =================
+  // ================= ĐẾM NGƯỢC QR CODE BIẾN ĐỔI THEO LỚP ĐANG CHỌN ĐỂ ĐIỂM DANH =================
   const handleGenerateQR = async () => {
-    if (!currentTeachingSession) return;
+    if (!attSelectedClass) return alert("Vui lòng chọn lớp học trước khi tạo mã QR!");
     try {
-      const res = await fetch(`/api/instructor/qr/${currentTeachingSession._id}`);
+      const res = await fetch(`/api/instructor/qr/${attSelectedClass}`);
       if (res.ok) {
         const data = await res.json();
         setQrToken(data.qrToken);
         setQrTimeLeft(60);
       }
     } catch (e) {
-      setQrToken(`QR_${currentTeachingSession._id}_${Date.now()}`);
+      setQrToken(`QR_${attSelectedClass}_${Date.now()}`);
       setQrTimeLeft(60);
     }
   };
@@ -93,23 +88,6 @@ export default function InstructorDashboard() {
     return () => clearInterval(timer);
   }, [qrToken, qrTimeLeft]);
 
-  // ================= TÍNH THỜI GIAN ĐANG DẠY =================
-  const getElapsedTime = useCallback(() => {
-    if (!currentTeachingSession?.startTime) return "00:00";
-    const diff = Math.floor((Date.now() - new Date(currentTeachingSession.startTime).getTime()) / 1000);
-    const h = Math.floor(diff / 3600);
-    const m = Math.floor((diff % 3600) / 60);
-    const s = diff % 60;
-    if (h > 0) return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  }, [currentTeachingSession]);
-
-  useEffect(() => {
-    if (!currentTeachingSession) return;
-    const t = setInterval(() => setElapsedDisplay(getElapsedTime()), 1000);
-    return () => clearInterval(t);
-  }, [currentTeachingSession, getElapsedTime]);
-
   // ================= FETCH DỮ LIỆU BAN ĐẦU =================
   useEffect(() => {
     const userData = localStorage.getItem("user");
@@ -126,7 +104,7 @@ export default function InstructorDashboard() {
       fetchMyClasses(parsedUser.name);
       fetchAttendanceHistory(parsedUser.name);
       fetchSessions();
-      fetchSalaryHistory(parsedUser.id);
+      fetchSalaryHistory(parsedUser._id || parsedUser.id); 
     }
   }, [router]);
 
@@ -193,42 +171,6 @@ export default function InstructorDashboard() {
     return matchSearch && matchShift;
   });
 
-  // ================= HANDLERS CHẤM CÔNG =================
-  const handleStartTeaching = async (classId: string) => {
-    if (!classId) { alert("Vui lòng chọn lớp học trước!"); return; }
-    setIsStartingSession(true);
-    try {
-      const res = await fetch('/api/instructor/start', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ classId, instructorId: user.id })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCurrentTeachingSession(data);
-      } else {
-        alert("Không thể bắt đầu ca dạy. Vui lòng thử lại!");
-      }
-    } catch (e) {
-      const mockSession = { _id: `mock_${Date.now()}`, classId, startTime: new Date().toISOString() };
-      setCurrentTeachingSession(mockSession);
-    } finally {
-      setIsStartingSession(false);
-    }
-  };
-
-  const handleEndTeaching = async () => {
-    if (!currentTeachingSession) return;
-    if (!confirm("Kết thúc ca dạy và chốt tiền lương?")) return;
-    try {
-      await fetch(`/api/instructor/end/${currentTeachingSession._id}`, { method: 'PUT' });
-      fetchSalaryHistory(user.id);
-    } catch (e) {}
-    setCurrentTeachingSession(null);
-    setQrToken("");
-    setQrTimeLeft(0);
-  };
-
   // ================= HANDLERS ĐIỂM DANH TAY =================
   const getUpcomingDates = () => {
     const dates = []; const today = new Date();
@@ -252,13 +194,36 @@ export default function InstructorDashboard() {
   const handleNoteChange = (index: number, note: string) => { const newData = [...attendanceList]; newData[index].note = note; setAttendanceList(newData); };
 
   const handleSaveAttendance = async () => {
-    if (!attSelectedClass || !attSelectedDate) { alert("Vui lòng chọn lớp và ngày điểm danh trước khi lưu!"); return; }
+    if (!attSelectedClass || !attSelectedDate) { 
+      alert("Vui lòng chọn lớp và ngày điểm danh trước khi lưu!"); 
+      return; 
+    }
     const cls = myClasses.find(c => c._id === attSelectedClass);
-    const payload = { classId: cls._id, className: cls.name, subjectName: cls.subject, date: attSelectedDate, instructor: user.name, records: attendanceList };
+    
+    const payload = { 
+      classId: cls._id, 
+      className: cls.name, 
+      subjectName: cls.subject, 
+      date: attSelectedDate, 
+      instructor: user.name, 
+      instructorId: user._id || user.id,
+      records: attendanceList 
+    };
+
     try {
-      const res = await fetch("/api/attendance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      if (res.ok) { alert("🎉 Đã lưu kết quả điểm danh vào cơ sở dữ liệu!"); fetchAttendanceHistory(user.name); }
-      else alert("Lỗi khi lưu điểm danh!");
+      const res = await fetch("/api/attendance", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify(payload) 
+      });
+      
+      if (res.ok) { 
+        alert("🎉 Đã lưu kết quả điểm danh vào cơ sở dữ liệu!"); 
+        fetchAttendanceHistory(user.name);
+        fetchSalaryHistory(user._id || user.id); 
+      } else {
+        alert("Lỗi khi lưu điểm danh!");
+      }
     } catch (error) { alert("Lỗi mạng!"); }
   };
 
@@ -369,13 +334,6 @@ export default function InstructorDashboard() {
     if (confirm("Xoá buổi học này?")) { await fetch(`/api/sessions/${id}`, { method: "DELETE" }); fetchSessions(); }
   };
 
-  const openAddSession = () => {
-    if (!sessionSelectedClass) return alert("Vui lòng chọn lớp học trước!");
-    setIsSessionEdit(false); setEditSessionId(null);
-    setSessionForm({ classId: sessionSelectedClass, dateInput: "", date: "", dayOfWeek: "", note: "", status: "Chưa điểm danh" });
-    setIsSessionModalOpen(true);
-  };
-
   const openEditSession = (sess: any) => {
     const [d, m, y] = sess.date.split('/');
     setSessionForm({ classId: sessionSelectedClass, dateInput: `${y}-${m}-${d}`, date: sess.date, dayOfWeek: sess.dayOfWeek, note: sess.note || "-", status: sess.status });
@@ -461,17 +419,14 @@ export default function InstructorDashboard() {
       {/* SIDEBAR */}
       <aside className="w-[260px] bg-white hidden md:flex flex-col shadow-sm z-10 shrink-0 border-r border-gray-100">
         <div className="h-16 flex items-center px-6 border-b border-gray-100"><div className="text-xl font-extrabold text-[#1e293b]">Teacher</div></div>
-        <nav className="flex-1 px-4 py-6 space-y-2">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          <button onClick={() => setActiveTab('schedule')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'schedule' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📆</span> Lịch giảng dạy</button>
           <button onClick={() => setActiveTab('classes')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'classes' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">🏫</span> Quản lý lớp học</button>
-          
-          {/* TAB MỚI: CHẤM CÔNG NẰM Ở ĐÂY */}
-          <button onClick={() => setActiveTab('timekeeping')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'timekeeping' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">⏱️</span> Chấm công</button>
-          
-          <button onClick={() => setActiveTab('attendance')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'attendance' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📋</span> Điểm danh sinh viên</button>
+          <button onClick={() => setActiveTab('attendance')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'attendance' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📋</span> Điểm danh</button>
           <button onClick={() => setActiveTab('history')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'history' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">🕒</span> Lịch sử điểm danh</button>
           <button onClick={() => setActiveTab('sessions')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'sessions' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📅</span> Quản lý buổi học</button>
-          <button onClick={() => setActiveTab('schedule')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'schedule' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">📆</span> Lịch giảng dạy</button>
           <button onClick={() => setActiveTab('salary')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'salary' ? 'bg-emerald-50 text-emerald-600 border-emerald-600' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">💰</span> Lịch sử lương</button>
+          <button onClick={() => setActiveTab('profile')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-bold transition-all border-l-4 ${activeTab === 'profile' ? 'bg-gray-100 text-gray-800 border-gray-800' : 'text-gray-600 border-transparent hover:bg-gray-50'}`}><span className="text-sm">⚙️</span> Thông tin cá nhân</button>
         </nav>
         <div className="p-4 border-t border-gray-100"><button onClick={handleLogout} className="flex items-center gap-2 text-gray-600 hover:text-red-500 font-bold px-4 py-2 text-sm w-full">🚪 Đăng xuất</button></div>
       </aside>
@@ -486,589 +441,527 @@ export default function InstructorDashboard() {
         <div className="bg-emerald-500 px-8 py-2 text-white/80 text-sm flex items-center shrink-0 shadow-sm">
           <span>Dashboard</span> <span className="mx-2">/</span>
           <span className="font-semibold text-white">
-            {activeTab === 'classes' ? 'Quản lý lớp học' : activeTab === 'timekeeping' ? 'Chấm công' : activeTab === 'attendance' ? 'Điểm danh' : activeTab === 'history' ? 'Lịch sử điểm danh' : activeTab === 'sessions' ? 'Quản lý buổi học' : activeTab === 'schedule' ? 'Lịch giảng dạy' : 'Lịch sử lương'}
+            {activeTab === 'classes' ? 'Quản lý lớp học' : activeTab === 'attendance' ? 'Điểm danh' : activeTab === 'history' ? 'Lịch sử điểm danh' : activeTab === 'sessions' ? 'Quản lý buổi học' : activeTab === 'schedule' ? 'Lịch giảng dạy' : activeTab === 'profile' ? 'Thông tin cá nhân' : 'Lịch sử lương'}
           </span>
         </div>
 
         <div className="flex-1 p-6 overflow-y-auto relative">
 
-          {/* TAB 1: QUẢN LÝ LỚP HỌC */}
-          {activeTab === 'classes' && (
+          {/* CHỈ HIỆN CÁI HỘP TRẮNG NÀY KHI KHÔNG PHẢI LÀ TAB PROFILE */}
+          {activeTab !== 'profile' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
-              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2"><span className="text-emerald-600">📅</span> Quản lý lớp học của tôi</h2>
-                <div className="text-sm text-gray-500 font-semibold">Tổng số lớp: <span className="text-gray-900">{myClasses.length}</span></div>
-              </div>
-              <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center">
-                <div className="relative w-full md:w-1/3"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span><input type="text" placeholder="Tìm kiếm tên lớp, phòng..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-emerald-500 bg-white" /></div>
-                <select value={shiftFilter} onChange={(e) => setShiftFilter(e.target.value)} className="w-full md:w-1/4 border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white"><option value="">Chọn ca học</option><option value="Ca 1 (07:15-09:15)">Ca 1</option><option value="Ca 2 (09:20-11:20)">Ca 2</option><option value="Ca 3 (12:00-14:00)">Ca 3</option><option value="Ca 4 (14:10-16:10)">Ca 4</option><option value="Ca 5 (16:20-18:20)">Ca 5</option><option value="Ca 6 (18:30-20:30)">Ca 6</option></select>
-                {(searchQuery || shiftFilter) && (<button onClick={handleClearClassFilters} className="text-sm font-semibold text-red-500 hover:underline whitespace-nowrap">Xóa bộ lọc</button>)}
-              </div>
-              <div className="overflow-x-auto flex-1 min-h-[400px]">
-                <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
-                  <thead className="text-xs text-gray-500 font-bold border-b border-gray-200 bg-gray-50">
-                    <tr><th className="px-6 py-4 font-semibold">Tên lớp ↕</th><th className="px-6 py-4 font-semibold">Môn học</th><th className="px-6 py-4 font-semibold">Chuyên ngành</th><th className="px-6 py-4 font-semibold">Ca học</th><th className="px-6 py-4 font-semibold">Ngày học</th><th className="px-6 py-4 font-semibold">Phòng học</th><th className="px-6 py-4 font-semibold">Sĩ số</th><th className="px-6 py-4 font-semibold">Ngày bắt đầu ↕</th><th className="px-6 py-4 font-semibold text-center">Hành động</th></tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {displayedClasses.map((cls) => (
-                      <tr key={cls._id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4 font-bold text-gray-900">{cls.name}</td>
-                        <td className="px-6 py-4"><span className="px-2 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded text-xs font-semibold">{cls.subject}</span></td>
-                        <td className="px-6 py-4"><span className="px-2 py-1 bg-green-50 text-green-600 border border-green-100 rounded text-xs font-semibold">{cls.major}</span></td>
-                        <td className="px-6 py-4 text-gray-500"><span className="px-2 py-1 bg-yellow-50 text-yellow-600 border border-yellow-100 rounded text-xs font-semibold">{cls.shift || '-'}</span></td>
-                        <td className="px-6 py-4 text-emerald-600 font-semibold">{cls.scheduleDays?.join(', ') || cls.days || '-'}</td>
-                        <td className="px-6 py-4 font-medium text-pink-600 bg-pink-50 border border-pink-100 px-2 py-1 rounded text-xs w-fit inline-block">{cls.room || '-'}</td>
-                        <td className="px-6 py-4 text-gray-600 font-semibold">👤 {cls.students?.length || 0}/{cls.maxStudents || 0}</td>
-                        <td className="px-6 py-4">{cls.startDate || '-'}</td>
-                        <td className="px-6 py-4 flex justify-center text-sm"><button onClick={() => openClassDetail(cls)} className="text-white bg-emerald-600 px-3 py-1.5 rounded hover:bg-emerald-700 font-semibold transition-colors flex items-center gap-1 shadow-sm">👁️ Chi tiết</button></td>
-                      </tr>
-                    ))}
-                    {displayedClasses.length === 0 && <tr><td colSpan={9} className="text-center py-20 text-gray-400">Không tìm thấy lớp học nào.</td></tr>}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 1.5: CHẤM CÔNG (MỚI TÁCH) */}
-          {activeTab === 'timekeeping' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 max-w-4xl mx-auto mt-10">
-              <div className="text-center mb-10">
-                <h2 className="text-3xl font-black text-gray-800 flex justify-center items-center gap-3">
-                  <span>⏱️</span> Hệ thống Chấm công
-                </h2>
-                <p className="text-gray-500 mt-2">Bắt đầu ca dạy để hệ thống ghi nhận thời gian và tính lương.</p>
-              </div>
-
-              {!currentTeachingSession ? (
-                <div className="max-w-md mx-auto space-y-6">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Chọn lớp học bạn sắp dạy:</label>
-                    <select 
-                      value={teachingClassId} 
-                      onChange={(e) => setTeachingClassId(e.target.value)} 
-                      className="w-full border-2 border-emerald-100 rounded-xl px-4 py-3 outline-none focus:border-emerald-500 text-gray-700 font-medium"
-                    >
-                      <option value="">-- Chọn lớp học --</option>
-                      {myClasses.map(c => <option key={c._id} value={c._id}>{c.name} - {c.subject}</option>)}
-                    </select>
+              
+              {/* TAB 1: QUẢN LÝ LỚP HỌC */}
+              {activeTab === 'classes' && (
+                <div className="flex flex-col h-full">
+                  <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2"><span className="text-emerald-600">📅</span> Quản lý lớp học của tôi</h2>
+                    <div className="text-sm text-gray-500 font-semibold">Tổng số lớp: <span className="text-gray-900">{myClasses.length}</span></div>
                   </div>
-                  <button
-                    onClick={() => handleStartTeaching(teachingClassId)}
-                    disabled={isStartingSession || !teachingClassId}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-emerald-200 text-lg flex items-center justify-center gap-2"
-                  >
-                    {isStartingSession ? '⏳ Đang xử lý...' : '▶ Bắt đầu ca dạy'}
-                  </button>
-                </div>
-              ) : (
-                <div className="max-w-md mx-auto text-center space-y-8 animate-in fade-in zoom-in duration-300">
-                  <div className="p-6 bg-emerald-50 rounded-2xl border-2 border-emerald-200">
-                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl mx-auto mb-4 shadow-sm">🏫</div>
-                    <div className="text-gray-500 font-medium text-sm">Đang giảng dạy lớp</div>
-                    <div className="font-bold text-gray-800 text-xl mt-1">
-                      {myClasses.find(c => c._id === currentTeachingSession.classId)?.name || '...'}
-                    </div>
-                    <div className="text-sm text-gray-400 mt-1">
-                      Bắt đầu lúc: {new Date(currentTeachingSession.startTime).toLocaleTimeString('vi-VN')}
-                    </div>
+                  <div className="p-4 bg-gray-50/50 border-b border-gray-100 flex flex-col md:flex-row gap-4 items-center">
+                    <div className="relative w-full md:w-1/3"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span><input type="text" placeholder="Tìm kiếm tên lớp, phòng..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-emerald-500 bg-white" /></div>
+                    <select value={shiftFilter} onChange={(e) => setShiftFilter(e.target.value)} className="w-full md:w-1/4 border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white"><option value="">Chọn ca học</option><option value="Ca 1 (07:15-09:15)">Ca 1</option><option value="Ca 2 (09:20-11:20)">Ca 2</option><option value="Ca 3 (12:00-14:00)">Ca 3</option><option value="Ca 4 (14:10-16:10)">Ca 4</option><option value="Ca 5 (16:20-18:20)">Ca 5</option><option value="Ca 6 (18:30-20:30)">Ca 6</option></select>
+                    {(searchQuery || shiftFilter) && (<button onClick={handleClearClassFilters} className="text-sm font-semibold text-red-500 hover:underline whitespace-nowrap">Xóa bộ lọc</button>)}
                   </div>
-
-                  <div>
-                    <div className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Thời gian đã dạy</div>
-                    <div className="text-6xl font-mono font-black text-emerald-600">{elapsedDisplay}</div>
+                  <div className="overflow-x-auto flex-1 min-h-[400px]">
+                    <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
+                      <thead className="text-xs text-gray-500 font-bold border-b border-gray-200 bg-gray-50">
+                        <tr><th className="px-6 py-4 font-semibold">Tên lớp ↕</th><th className="px-6 py-4 font-semibold">Môn học</th><th className="px-6 py-4 font-semibold">Chuyên ngành</th><th className="px-6 py-4 font-semibold">Ca học</th><th className="px-6 py-4 font-semibold">Ngày học</th><th className="px-6 py-4 font-semibold">Phòng học</th><th className="px-6 py-4 font-semibold">Sĩ số</th><th className="px-6 py-4 font-semibold">Ngày bắt đầu ↕</th><th className="px-6 py-4 font-semibold text-center">Hành động</th></tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {displayedClasses.map((cls) => (
+                          <tr key={cls._id} className="hover:bg-gray-50/50 transition-colors">
+                            <td className="px-6 py-4 font-bold text-gray-900">{cls.name}</td>
+                            <td className="px-6 py-4"><span className="px-2 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded text-xs font-semibold">{cls.subject}</span></td>
+                            <td className="px-6 py-4"><span className="px-2 py-1 bg-green-50 text-green-600 border border-green-100 rounded text-xs font-semibold">{cls.major}</span></td>
+                            <td className="px-6 py-4 text-gray-500"><span className="px-2 py-1 bg-yellow-50 text-yellow-600 border border-yellow-100 rounded text-xs font-semibold">{cls.shift || '-'}</span></td>
+                            <td className="px-6 py-4 text-emerald-600 font-semibold">{cls.scheduleDays?.join(', ') || cls.days || '-'}</td>
+                            <td className="px-6 py-4 font-medium text-pink-600 bg-pink-50 border border-pink-100 px-2 py-1 rounded text-xs w-fit inline-block">{cls.room || '-'}</td>
+                            <td className="px-6 py-4 text-gray-600 font-semibold">👤 {cls.students?.length || 0}/{cls.maxStudents || 0}</td>
+                            <td className="px-6 py-4">{cls.startDate || '-'}</td>
+                            <td className="px-6 py-4 flex justify-center text-sm"><button onClick={() => openClassDetail(cls)} className="text-white bg-emerald-600 px-3 py-1.5 rounded hover:bg-emerald-700 font-semibold transition-colors flex items-center gap-1 shadow-sm">👁️ Chi tiết</button></td>
+                          </tr>
+                        ))}
+                        {displayedClasses.length === 0 && <tr><td colSpan={9} className="text-center py-20 text-gray-400">Không tìm thấy lớp học nào.</td></tr>}
+                      </tbody>
+                    </table>
                   </div>
-
-                  <button
-                    onClick={handleEndTeaching}
-                    className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-xl transition-colors shadow-lg shadow-red-200 text-lg flex items-center justify-center gap-2"
-                  >
-                    ■ Kết thúc ca & Chốt lương
-                  </button>
                 </div>
               )}
-            </div>
-          )}
 
-          {/* TAB 2: ĐIỂM DANH */}
-          {activeTab === 'attendance' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
-              <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
-                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><span>📋</span> Điểm danh lớp học</h2>
-                <button onClick={() => setActiveTab('history')} className="text-sm font-semibold text-gray-500 hover:text-emerald-600 flex items-center gap-1">🕒 Xem lịch sử</button>
-              </div>
-
-              {/* KHU VỰC TẠO QR BẰNG TAY */}
-              <div className="p-6 bg-emerald-50 border-b border-emerald-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                <div>
-                  <h3 className="font-bold text-emerald-800 flex items-center gap-2 text-lg">
-                    <span>📱</span> Điểm danh bằng mã QR
-                  </h3>
-                  <p className="text-sm text-emerald-600 mt-1">
-                    Sinh viên quét mã để tự động điểm danh. Mã QR chỉ có hiệu lực trong 60 giây.
-                  </p>
-                </div>
-
-                {!currentTeachingSession ? (
-                  <div className="bg-white px-6 py-4 rounded-xl shadow-sm border border-emerald-100 text-sm text-gray-500 font-medium text-center">
-                    🔒 Vui lòng Bắt đầu ca dạy tại tab <strong>Chấm công</strong><br/>để mở khóa chức năng tạo mã QR.
+              {/* TAB 2: ĐIỂM DANH */}
+              {activeTab === 'attendance' && (
+                <div className="flex flex-col h-full">
+                  <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
+                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><span>📋</span> Điểm danh lớp học</h2>
+                    <button onClick={() => setActiveTab('history')} className="text-sm font-semibold text-gray-500 hover:text-emerald-600 flex items-center gap-1">🕒 Xem lịch sử</button>
                   </div>
-                ) : (
-                  <div className="bg-white p-4 rounded-xl shadow-sm border border-emerald-200 flex flex-col items-center justify-center min-w-[250px] min-h-[160px]">
-                    {!qrToken ? (
-                      <button 
-                        onClick={handleGenerateQR} 
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-lg transition-colors shadow-sm text-sm"
-                      >
-                        Tạo mã QR (60 giây)
-                      </button>
-                    ) : (
-                      <div className="flex flex-col items-center animate-in fade-in duration-300 w-full">
-                        <div className="p-2 border-2 border-emerald-500 rounded-lg bg-white mb-3">
-                          <QRCodeSVG value={qrToken} size={110} />
-                        </div>
-                        <div className="w-full text-center">
-                          <div className="text-xs font-bold text-red-500 mb-1">Hủy sau: {qrTimeLeft}s</div>
-                          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${(qrTimeLeft / 60) * 100}%` }} />
+
+                  {/* KHU VỰC TẠO QR ĐIỂM DANH THEO LỚP ĐANG CHỌN */}
+                  <div className="p-6 bg-emerald-50 border-b border-emerald-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div>
+                      <h3 className="font-bold text-emerald-800 flex items-center gap-2 text-lg">
+                        <span>📱</span> Điểm danh bằng mã QR
+                      </h3>
+                      <p className="text-sm text-emerald-600 mt-1">
+                        Sinh viên quét mã để tự động điểm danh. Mã QR chỉ có hiệu lực trong 60 giây.
+                      </p>
+                    </div>
+
+                    <div className="bg-white p-4 rounded-xl shadow-sm border border-emerald-200 flex flex-col items-center justify-center min-w-[250px] min-h-[160px]">
+                      {!qrToken ? (
+                        <button 
+                          onClick={handleGenerateQR} 
+                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-lg transition-colors shadow-sm text-sm"
+                        >
+                          Tạo mã QR (60 giây)
+                        </button>
+                      ) : (
+                        <div className="flex flex-col items-center animate-in fade-in duration-300 w-full">
+                          <div className="p-2 border-2 border-emerald-500 rounded-lg bg-white mb-3">
+                            <QRCodeSVG value={qrToken} size={110} />
                           </div>
+                          <div className="w-full text-center">
+                            <div className="text-xs font-bold text-red-500 mb-1">Hủy sau: {qrTimeLeft}s</div>
+                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${(qrTimeLeft / 60) * 100}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* KHU VỰC CHỌN LỚP ĐIỂM DANH TAY */}
+                  <div className="p-6 bg-gray-50 border-b border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Lớp học (Của tôi):</label>
+                      <select value={attSelectedClass} onChange={(e) => handleSelectClassForAttendance(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
+                        <option value="">Chọn lớp học...</option>
+                        {myClasses.map(cls => (<option key={cls._id} value={cls._id}>{cls.name} - {cls.subject}</option>))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">Buổi học / Ngày:</label>
+                      <div className="flex items-center gap-2">
+                        <select value={attSelectedDate} onChange={(e) => setAttSelectedDate(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
+                          <option value="">Chọn buổi học/Ngày...</option>
+                          {upcomingDates.map((dateStr) => (<option key={dateStr} value={dateStr}>{dateStr}</option>))}
+                        </select>
+                        <button className="p-2.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-500 shadow-sm">↻</button>
+                      </div>
+                    </div>
+                  </div>
+                  {attSelectedClass && attSelectedDate ? (
+                    <div className="p-6 flex-1 overflow-y-auto">
+                      <div className="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                        <div className="font-bold text-gray-800 text-lg">{selectedClassData?.name} - {selectedClassData?.subject} - {attSelectedDate}</div>
+                        <div className="flex items-center gap-6 text-sm font-semibold mt-4 md:mt-0"><span className="text-gray-700">Tổng: {attTotalStudents}</span><span className="text-green-600">Có mặt: {attPresentCount}</span><span className="text-yellow-600">Muộn: {attLateCount}</span><span className="text-red-500">Vắng: {attAbsentCount}</span></div>
+                      </div>
+                      <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-semibold text-gray-700">Điểm danh hàng loạt:</span>
+                          <button onClick={() => handleBulkAttendance('Có mặt')} className="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả có mặt</button>
+                          <button onClick={() => handleBulkAttendance('Vắng')} className="bg-red-100 text-red-700 hover:bg-red-200 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả vắng</button>
+                          <button onClick={() => handleBulkAttendance('Muộn')} className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả muộn</button>
+                        </div>
+                        <button onClick={handleSaveAttendance} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-md font-bold transition-colors shadow-sm flex items-center gap-2">💾 Lưu điểm danh</button>
+                      </div>
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
+                          <thead className="bg-gray-50 border-b border-gray-200 text-gray-600">
+                            <tr><th className="px-6 py-4 font-bold w-16 text-center">STT</th><th className="px-6 py-4 font-bold">Sinh viên</th><th className="px-6 py-4 font-bold text-center w-56">Trạng thái điểm danh</th><th className="px-6 py-4 font-bold w-1/3">Ghi chú</th></tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {attendanceList.length === 0 ? (
+                              <tr><td colSpan={4} className="text-center py-10 text-gray-500">Lớp này chưa có sinh viên nào.</td></tr>
+                            ) : (
+                              attendanceList.map((item, index) => {
+                                const isPresent = item.status === 'Có mặt'; const isAbsent = item.status === 'Vắng';
+                                return (
+                                  <tr key={index} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4 text-center font-medium text-gray-500">{index + 1}</td>
+                                    <td className="px-6 py-4"><div className="font-bold text-gray-800 mb-1">{item.studentName}</div><span className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold ${isPresent ? 'bg-green-100 text-green-700' : isAbsent ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'}`}>{item.status}</span></td>
+                                    <td className="px-6 py-4 text-center">
+                                      <div className="relative inline-block w-full max-w-[160px] text-left">
+                                        <select value={item.status} onChange={(e) => handleStatusChange(index, e.target.value)} className={`appearance-none w-full bg-white border ${isPresent ? 'border-green-300 text-green-600 focus:ring-green-100' : isAbsent ? 'border-red-300 text-red-500 focus:ring-red-100' : 'border-yellow-300 text-yellow-600 focus:ring-yellow-100'} px-4 py-2 pr-8 rounded font-bold outline-none cursor-pointer text-sm focus:ring-4 transition-all shadow-sm`}><option value="Có mặt">✅ Có mặt</option><option value="Vắng">❌ Vắng</option><option value="Muộn">Muộn</option></select>
+                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"><svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg></div>
+                                      </div>
+                                    </td>
+                                    <td className="px-6 py-4"><input type="text" placeholder="Ghi chú..." value={item.note} onChange={(e) => handleNoteChange(index, e.target.value)} className="w-full border border-gray-200 rounded px-3 py-2 outline-none focus:border-emerald-500 text-sm bg-transparent" /></td>
+                                  </tr>
+                                )
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center py-20 text-gray-400 bg-gray-50/30 m-6 rounded-lg border border-dashed border-gray-300"><span className="text-5xl mb-3">👆</span><p className="font-semibold text-gray-500 text-lg">Vui lòng chọn Lớp học và Buổi học ở trên</p><p className="text-sm">để bắt đầu điểm danh sinh viên.</p></div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: LỊCH SỬ ĐIỂM DANH */}
+              {activeTab === 'history' && (
+                <div className="flex flex-col h-full">
+                  <div className="p-6 flex justify-between items-center bg-white border-b border-gray-100">
+                    <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2"><span className="text-gray-400 text-xl">🕒</span> Lịch sử điểm danh</h2>
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => setActiveTab('attendance')} className="px-4 py-2 border border-gray-200 text-gray-600 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">← Quay lại điểm danh</button>
+                      <button className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">📥 Xuất Excel</button>
+                    </div>
+                  </div>
+                  <div className="p-6 overflow-y-auto">
+                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Lớp học:</label><select value={historyFilterClass} onChange={(e) => setHistoryFilterClass(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white"><option value="">Tất cả lớp học</option>{myClasses.map(cls => <option key={cls._id} value={cls.name}>{cls.name}</option>)}</select></div>
+                        <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Trạng thái:</label><select value={historyFilterStatus} onChange={(e) => setHistoryFilterStatus(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white"><option value="">Tất cả trạng thái</option><option value="Có mặt">Có mặt</option><option value="Vắng">Vắng</option><option value="Muộn">Muộn</option></select></div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Thời gian (Từ - Đến):</label>
+                          <div className="flex items-center gap-2">
+                            <input type="date" value={historyStartDate} onChange={(e) => setHistoryStartDate(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" title="Từ ngày" />
+                            <span className="text-gray-400">-</span>
+                            <input type="date" value={historyEndDate} onChange={(e) => setHistoryEndDate(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" title="Đến ngày" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-col md:flex-row items-end justify-between gap-4 border-t border-gray-100 pt-4">
+                        <div className="w-full md:w-1/2">
+                          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Tìm kiếm:</label>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span className="text-gray-400 text-sm">🔍</span></div>
+                            <input type="text" placeholder="Tên sinh viên, mã SV..." value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-emerald-500 bg-white text-gray-700" />
+                          </div>
+                        </div>
+                        <button onClick={clearHistoryFilters} className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors w-fit mb-1"><span className="text-lg leading-none">🗑️</span> Xóa bộ lọc</button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                      <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Tổng điểm danh</span><span className="text-3xl font-extrabold text-emerald-600">{histTotal}</span></div>
+                      <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Có mặt</span><span className="text-3xl font-extrabold text-green-500 flex items-center gap-2"><span className="bg-green-100 rounded px-1 pb-1 text-xl">✅</span> {histPresent}</span></div>
+                      <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Muộn</span><span className="text-3xl font-extrabold text-yellow-500 flex items-center gap-2">🕒 {histLate}</span></div>
+                      <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Vắng</span><span className="text-3xl font-extrabold text-red-500 flex items-center gap-2">❌ {histAbsent}</span></div>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
+                          <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs">
+                            <tr><th className="px-6 py-4 font-bold text-center w-16 uppercase tracking-wider">STT</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Sinh viên</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Lớp học</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Ngày học</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Trạng thái</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Ghi chú</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Thời gian điểm danh</th></tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {filteredHistory.length === 0 ? (
+                              <tr><td colSpan={7} className="text-center py-16 text-gray-400 font-medium">Chưa có dữ liệu điểm danh nào.</td></tr>
+                            ) : (
+                              filteredHistory.map((item, index) => {
+                                const isPresent = item.status === 'Có mặt'; const isAbsent = item.status === 'Vắng';
+                                const userInfo = usersData.find(u => u.name === item.studentName);
+                                return (
+                                  <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4 text-center font-medium text-gray-500">{index + 1}</td>
+                                    <td className="px-6 py-4"><div className="font-bold text-gray-800">{item.studentName}</div><div className="text-xs text-gray-400 mt-0.5">{userInfo?.username || "N/A"}</div></td>
+                                    <td className="px-6 py-4"><div className="font-bold text-gray-800">{item.className}</div><div className="text-xs text-gray-400 mt-0.5">{item.subjectName}</div></td>
+                                    <td className="px-6 py-4 text-center font-medium text-gray-600">{item.date}</td>
+                                    <td className="px-6 py-4 text-center"><span className={`inline-block px-3 py-1 rounded text-xs font-bold border ${isPresent ? 'bg-green-50 border-green-100 text-green-500' : isAbsent ? 'bg-red-50 border-red-100 text-red-500' : 'bg-yellow-50 border-yellow-100 text-yellow-600'}`}>{item.status}</span></td>
+                                    <td className="px-6 py-4 text-gray-500">{item.note}</td>
+                                    <td className="px-6 py-4 text-center"><div className="text-gray-700">{item.timestamp.split(' ')[0]}</div><div className="text-xs text-gray-400 mt-0.5">{item.timestamp.split(' ')[1]}</div></td>
+                                  </tr>
+                                )
+                              })
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: QUẢN LÝ BUỔI HỌC */}
+              {activeTab === 'sessions' && (
+                <div className="flex flex-col h-full">
+                  <div className="p-6 flex justify-between items-center border-b border-gray-100 bg-white">
+                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><span className="text-emerald-600 text-2xl">📅</span> Quản lý buổi học</h2>
+                  </div>
+                  <div className="p-6 bg-gray-50 border-b border-gray-100">
+                    <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Lớp học:</label>
+                    <select value={sessionSelectedClass} onChange={(e) => setSessionSelectedClass(e.target.value)} className="w-full md:w-1/2 border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
+                      <option value="">Chọn lớp học...</option>{myClasses.map(c => <option key={c._id} value={c._id}>{c.name} - {c.subject}</option>)}
+                    </select>
+                  </div>
+                  {sessionSelectedClass && selectedSessionClassData ? (
+                    <div className="p-6 flex-1 overflow-y-auto">
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="bg-gray-50/70 p-5 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
+                          <div>
+                            <div className="font-bold text-gray-800 text-lg mb-1">{selectedSessionClassData.name} - {selectedSessionClassData.subject}</div>
+                            <div className="text-sm text-gray-500">Giảng viên: <span className="font-medium text-gray-700">{selectedSessionClassData.instructor}</span></div>
+                          </div>
+                          <div className="flex gap-8 text-center bg-white px-6 py-3 rounded-lg border border-gray-200 shadow-sm">
+                            <div><div className="text-2xl font-extrabold text-gray-800">{mergedSessionsForClass.length}</div><div className="text-xs text-gray-500 uppercase font-semibold mt-1">Tổng buổi học</div></div>
+                            <div className="w-px bg-gray-200"></div>
+                            <div><div className="text-2xl font-extrabold text-green-500">{sessionAttendedCount}</div><div className="text-xs text-green-600 uppercase font-semibold mt-1">Đã học</div></div>
+                            <div className="w-px bg-gray-200"></div>
+                            <div><div className="text-2xl font-extrabold text-emerald-600">{sessionUpcomingCount}</div><div className="text-xs text-emerald-600 uppercase font-semibold mt-1">Sắp tới</div></div>
+                          </div>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
+                            <thead className="bg-white border-b border-gray-200 text-gray-500 text-xs">
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {mergedSessionsForClass.length === 0 ? (
+                                <tr><td colSpan={5} className="text-center py-12 text-gray-400 font-medium">Lớp học này chưa được cấu hình ngày bắt đầu hoặc lịch học.</td></tr>
+                              ) : (
+                                mergedSessionsForClass.map((sess, index) => (
+                                  <tr key={sess.id} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4 text-center font-medium text-gray-500">{index + 1}</td>
+                                    <td className="px-6 py-4"><div className="font-bold text-gray-800">{sess.date}</div><div className="text-xs text-gray-400 mt-0.5 capitalize">{sess.dayOfWeek}</div></td>
+                                    <td className="px-6 py-4 text-gray-500">{sess.note || '-'}</td>
+                                    <td className="px-6 py-4 text-center"><span className={`inline-block px-3 py-1.5 rounded text-xs font-bold border ${sess.status === 'Đã điểm danh' ? 'bg-white border-green-400 text-green-600' : 'bg-gray-50 border-gray-300 text-gray-500'}`}>{sess.status}</span></td>
+                                    <td className="px-6 py-4 flex justify-center items-center gap-4 text-lg">
+                                      <button onClick={() => { const cls = myClasses.find(c => c._id === sess.classId || c._id === sessionSelectedClass); if (cls) openClassDetail(cls); }} className="text-gray-400 hover:text-gray-600 transition-colors" title="Xem chi tiết lớp học">👁️</button>
+                                      <button onClick={() => openEditSession(sess)} className="text-gray-400 hover:text-emerald-600 transition-colors" title="Sửa ghi chú/trạng thái">✏️</button>
+                                      {!sess.isAuto && (<button onClick={() => deleteSession(sess.id, sess.isAuto)} className="text-gray-400 hover:text-red-500 transition-colors" title="Xóa buổi bổ sung">🗑️</button>)}
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center py-24 text-gray-400 bg-white"><span className="text-5xl mb-4">👆</span><p className="font-semibold text-gray-500 text-lg">Vui lòng chọn Lớp học ở trên</p><p className="text-sm mt-1">để xem danh sách buổi học của lớp.</p></div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 5: LỊCH GIẢNG DẠY */}
+              {activeTab === 'schedule' && (
+                <div className="flex flex-col h-full">
+                  <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-500 flex justify-between items-center text-white">
+                    <h2 className="text-lg font-bold flex items-center gap-2"><span className="text-2xl">📆</span> Lịch giảng dạy</h2>
+                    <div className="flex bg-white/20 p-1 rounded-lg">
+                      <button onClick={() => setScheduleViewMode('calendar')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors flex items-center gap-2 ${scheduleViewMode === 'calendar' ? 'bg-white text-emerald-600 shadow-sm' : 'text-white hover:bg-white/10'}`}>📅 Lịch</button>
+                      <button onClick={() => setScheduleViewMode('list')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors flex items-center gap-2 ${scheduleViewMode === 'list' ? 'bg-white text-emerald-600 shadow-sm' : 'text-white hover:bg-white/10'}`}>🗂️ Danh sách</button>
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 p-4 border-b border-gray-200 grid grid-cols-2 md:grid-cols-4 gap-4 divide-x divide-gray-200">
+                    <div className="text-center px-4"><div className="text-2xl font-extrabold text-emerald-600 flex items-center justify-center gap-2">📚 {schedTotalClasses}</div><div className="text-xs text-gray-500 uppercase font-bold mt-1">Lớp Đang Dạy</div></div>
+                    <div className="text-center px-4"><div className="text-2xl font-extrabold text-green-500 flex items-center justify-center gap-2">🕒 {schedTotalSessions}</div><div className="text-xs text-gray-500 uppercase font-bold mt-1">Tổng Số Buổi</div></div>
+                    <div className="text-center px-4"><div className="text-2xl font-extrabold text-purple-500 flex items-center justify-center gap-2">📝 {schedTotalSubjects}</div><div className="text-xs text-gray-500 uppercase font-bold mt-1">Môn Học</div></div>
+                    <div className="text-center px-4"><div className="text-2xl font-extrabold text-orange-500 flex items-center justify-center gap-2">👤 {schedTotalStudents}</div><div className="text-xs text-gray-500 uppercase font-bold mt-1">Sinh Viên</div></div>
+                  </div>
+                  <div className="p-6 overflow-y-auto flex-1 bg-white">
+                    <div className="mb-6 flex flex-col md:flex-row justify-between items-end gap-4">
+                      <div className="flex gap-4 w-full md:w-auto">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Khoảng thời gian:</label>
+                          <div className="flex items-center gap-2">
+                            <input type="date" value={scheduleStartDate} onChange={(e) => setScheduleStartDate(e.target.value)} className="w-40 border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" />
+                            <span className="text-gray-400">→</span>
+                            <input type="date" value={scheduleEndDate} onChange={(e) => setScheduleEndDate(e.target.value)} className="w-40 border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" />
+                          </div>
+                        </div>
+                        <div className="w-64">
+                          <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Môn học:</label>
+                          <select value={scheduleSubject} onChange={(e) => setScheduleSubject(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white">
+                            <option value="">Tất cả môn học</option>
+                            {uniqueSubjects.map((sub, idx) => <option key={idx} value={sub as string}>{sub as string}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <button onClick={clearScheduleFilters} className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors h-10 px-4 border border-transparent hover:border-red-100 rounded-md">Xóa bộ lọc</button>
+                    </div>
+                    {scheduleViewMode === 'calendar' ? (
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
+                          <div className="flex items-center gap-4 text-sm font-semibold">
+                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-400 inline-block"></span> Ca Sáng (1-2)</div>
+                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-400 inline-block"></span> Ca Chiều (3-4)</div>
+                            <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-purple-400 inline-block"></span> Ca Tối (5-6)</div>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <button onClick={handleToday} className="px-4 py-1.5 text-sm font-bold text-gray-600 border border-gray-300 rounded hover:bg-gray-100 transition-colors">Hôm nay</button>
+                            <div className="flex items-center gap-2 border border-gray-300 rounded overflow-hidden">
+                              <button onClick={handlePrevMonth} className="px-3 py-1.5 hover:bg-gray-100 font-bold text-gray-600 transition-colors">&lt;</button>
+                              <span className="px-4 py-1.5 font-bold text-emerald-600 bg-white min-w-[120px] text-center border-x border-gray-300">{monthNames[currentMonth]} {currentYear}</span>
+                              <button onClick={handleNextMonth} className="px-3 py-1.5 hover:bg-gray-100 font-bold text-gray-600 transition-colors">&gt;</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-7 bg-gray-200 gap-px border-b border-gray-200">
+                          {dayNames.map(day => (<div key={day} className="bg-white py-3 text-center text-xs font-extrabold text-gray-500 uppercase tracking-wider">{day}</div>))}
+                          {Array.from({ length: firstDay }).map((_, idx) => (<div key={`empty-${idx}`} className="bg-gray-50 min-h-[120px]"></div>))}
+                          {Array.from({ length: daysInCurrentMonth }).map((_, idx) => {
+                            const dayNum = idx + 1;
+                            const dateStr = `${String(dayNum).padStart(2, '0')}/${String(currentMonth + 1).padStart(2, '0')}/${currentYear}`;
+                            const sessionsOnThisDay = filteredScheduleSessions.filter(s => s.date === dateStr);
+                            const isToday = new Date().getDate() === dayNum && new Date().getMonth() === currentMonth && new Date().getFullYear() === currentYear;
+                            return (
+                              <div key={dayNum} className={`bg-white min-h-[120px] p-2 flex flex-col gap-1 transition-colors hover:bg-emerald-50/30 ${isToday ? 'ring-2 ring-inset ring-emerald-500 bg-emerald-50/10' : ''}`}>
+                                <div className={`text-right text-xs font-bold mb-1 ${isToday ? 'text-emerald-600' : 'text-gray-400'}`}>{dayNum}</div>
+                                <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[100px]">
+                                  {sessionsOnThisDay.map((sess, sIdx) => {
+                                    let colorClass = "border-gray-400 bg-gray-50 text-gray-700";
+                                    if (sess.shift?.includes("Ca 1") || sess.shift?.includes("Ca 2")) colorClass = "border-green-400 bg-green-50 text-green-800";
+                                    else if (sess.shift?.includes("Ca 3") || sess.shift?.includes("Ca 4")) colorClass = "border-blue-400 bg-blue-50 text-blue-800";
+                                    else if (sess.shift?.includes("Ca 5") || sess.shift?.includes("Ca 6")) colorClass = "border-purple-400 bg-purple-50 text-purple-800";
+                                    return (
+                                      <div key={sIdx} onClick={() => handleJumpToAttendance(sess)} className={`border-l-4 rounded-r px-2 py-1.5 text-[10px] leading-tight cursor-pointer hover:opacity-80 transition-opacity shadow-sm ${colorClass}`} title={`Bấm để Điểm danh lớp ${sess.className}`}>
+                                        <div className="font-bold truncate">{sess.className}</div>
+                                        <div className="truncate opacity-80">{sess.subject}</div>
+                                        <div className="mt-0.5 font-semibold flex justify-between"><span>{sess.room || 'N/A'}</span><span>{sess.shift ? sess.shift.split(' ')[0] : ''}</span></div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {Array.from({ length: (7 - ((firstDay + daysInCurrentMonth) % 7)) % 7 }).map((_, idx) => (<div key={`empty-end-${idx}`} className="bg-gray-50 min-h-[120px]"></div>))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
+                            <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs">
+                              <tr><th className="px-6 py-4 font-bold uppercase tracking-wider">Ngày giảng dạy</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Thời gian</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Lớp học & Ca học</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Môn học</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Ghi chú</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Thao tác</th></tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {sortedScheduleSessions.length === 0 ? (
+                                <tr><td colSpan={6} className="text-center py-16 text-gray-400 font-medium">Không tìm thấy lịch giảng dạy nào trong khoảng thời gian này.</td></tr>
+                              ) : (
+                                sortedScheduleSessions.map((sess, index) => (
+                                  <tr key={index} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-6 py-4"><div className="font-bold text-gray-800">{sess.date}</div><div className="text-xs text-gray-500 mt-0.5 capitalize">{sess.dayOfWeek}</div></td>
+                                    <td className="px-6 py-4 font-medium text-gray-600"><div className="bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-md inline-flex items-center gap-1 text-xs font-semibold">🕒 {extractTimeFromShift(sess.shift)}</div></td>
+                                    <td className="px-6 py-4"><div className="font-bold text-gray-800 flex items-center gap-2">🏫 {sess.className}</div><div className="mt-1"><span className="bg-orange-50 text-orange-600 border border-orange-100 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{extractCaFromShift(sess.shift)}</span></div></td>
+                                    <td className="px-6 py-4 font-semibold text-gray-700">{sess.subject}</td>
+                                    <td className="px-6 py-4 text-gray-500">{sess.note !== '-' ? sess.note : 'Không có'}</td>
+                                    <td className="px-6 py-4 flex justify-center items-center gap-4">
+                                      <button onClick={() => { const cls = myClasses.find(c => c._id === sess.classId); if (cls) openClassDetail(cls); }} className="text-gray-400 hover:text-gray-600 transition-colors text-lg" title="Xem chi tiết lớp học">👁️</button>
+                                      <button onClick={() => handleJumpToAttendance(sess)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-md font-bold text-xs shadow-sm transition-colors flex items-center gap-1">✓ Điểm danh</button>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
                         </div>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-
-              {/* KHU VỰC ĐIỂM DANH TAY CŨ */}
-              <div className="p-6 bg-gray-50 border-b border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Lớp học (Của tôi):</label>
-                  <select value={attSelectedClass} onChange={(e) => handleSelectClassForAttendance(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
-                    <option value="">Chọn lớp học...</option>
-                    {myClasses.map(cls => (<option key={cls._id} value={cls._id}>{cls.name} - {cls.subject}</option>))}
-                  </select>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Buổi học / Ngày:</label>
-                  <div className="flex items-center gap-2">
-                    <select value={attSelectedDate} onChange={(e) => setAttSelectedDate(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
-                      <option value="">Chọn buổi học/Ngày...</option>
-                      {upcomingDates.map((dateStr) => (<option key={dateStr} value={dateStr}>{dateStr}</option>))}
-                    </select>
-                    <button className="p-2.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-500 shadow-sm">↻</button>
-                  </div>
-                </div>
-              </div>
-              {attSelectedClass && attSelectedDate ? (
-                <div className="p-6 flex-1 overflow-y-auto">
-                  <div className="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="font-bold text-gray-800 text-lg">{selectedClassData?.name} - {selectedClassData?.subject} - {attSelectedDate}</div>
-                    <div className="flex items-center gap-6 text-sm font-semibold mt-4 md:mt-0"><span className="text-gray-700">Tổng: {attTotalStudents}</span><span className="text-green-600">Có mặt: {attPresentCount}</span><span className="text-yellow-600">Muộn: {attLateCount}</span><span className="text-red-500">Vắng: {attAbsentCount}</span></div>
-                  </div>
-                  <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-gray-700">Điểm danh hàng loạt:</span>
-                      <button onClick={() => handleBulkAttendance('Có mặt')} className="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả có mặt</button>
-                      <button onClick={() => handleBulkAttendance('Vắng')} className="bg-red-100 text-red-700 hover:bg-red-200 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả vắng</button>
-                      <button onClick={() => handleBulkAttendance('Muộn')} className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả muộn</button>
-                    </div>
-                    <button onClick={handleSaveAttendance} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-md font-bold transition-colors shadow-sm flex items-center gap-2">💾 Lưu điểm danh</button>
-                  </div>
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
-                      <thead className="bg-gray-50 border-b border-gray-200 text-gray-600">
-                        <tr><th className="px-6 py-4 font-bold w-16 text-center">STT</th><th className="px-6 py-4 font-bold">Sinh viên</th><th className="px-6 py-4 font-bold text-center w-56">Trạng thái điểm danh</th><th className="px-6 py-4 font-bold w-1/3">Ghi chú</th></tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {attendanceList.length === 0 ? (
-                          <tr><td colSpan={4} className="text-center py-10 text-gray-500">Lớp này chưa có sinh viên nào.</td></tr>
-                        ) : (
-                          attendanceList.map((item, index) => {
-                            const isPresent = item.status === 'Có mặt'; const isAbsent = item.status === 'Vắng';
-                            return (
-                              <tr key={index} className="hover:bg-gray-50/50 transition-colors">
-                                <td className="px-6 py-4 text-center font-medium text-gray-500">{index + 1}</td>
-                                <td className="px-6 py-4"><div className="font-bold text-gray-800 mb-1">{item.studentName}</div><span className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold ${isPresent ? 'bg-green-100 text-green-700' : isAbsent ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'}`}>{item.status}</span></td>
-                                <td className="px-6 py-4 text-center">
-                                  <div className="relative inline-block w-full max-w-[160px] text-left">
-                                    <select value={item.status} onChange={(e) => handleStatusChange(index, e.target.value)} className={`appearance-none w-full bg-white border ${isPresent ? 'border-green-300 text-green-600 focus:ring-green-100' : isAbsent ? 'border-red-300 text-red-500 focus:ring-red-100' : 'border-yellow-300 text-yellow-600 focus:ring-yellow-100'} px-4 py-2 pr-8 rounded font-bold outline-none cursor-pointer text-sm focus:ring-4 transition-all shadow-sm`}><option value="Có mặt">✅ Có mặt</option><option value="Vắng">❌ Vắng</option><option value="Muộn">🕒 Muộn</option></select>
-                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"><svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg></div>
-                                  </div>
-                                </td>
-                                <td className="px-6 py-4"><input type="text" placeholder="Ghi chú..." value={item.note} onChange={(e) => handleNoteChange(index, e.target.value)} className="w-full border border-gray-200 rounded px-3 py-2 outline-none focus:border-emerald-500 text-sm bg-transparent" /></td>
-                              </tr>
-                            )
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center py-20 text-gray-400 bg-gray-50/30 m-6 rounded-lg border border-dashed border-gray-300"><span className="text-5xl mb-3">👆</span><p className="font-semibold text-gray-500 text-lg">Vui lòng chọn Lớp học và Buổi học ở trên</p><p className="text-sm">để bắt đầu điểm danh sinh viên.</p></div>
               )}
-            </div>
-          )}
 
-          {/* TAB 3: LỊCH SỬ ĐIỂM DANH */}
-          {activeTab === 'history' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
-              <div className="p-6 flex justify-between items-center bg-white border-b border-gray-100">
-                <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2"><span className="text-gray-400 text-xl">🕒</span> Lịch sử điểm danh</h2>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => setActiveTab('attendance')} className="px-4 py-2 border border-gray-200 text-gray-600 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">← Quay lại điểm danh</button>
-                  <button className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">📥 Xuất Excel</button>
-                </div>
-              </div>
-              <div className="p-6 overflow-y-auto">
-                <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Lớp học:</label><select value={historyFilterClass} onChange={(e) => setHistoryFilterClass(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white"><option value="">Tất cả lớp học</option>{myClasses.map(cls => <option key={cls._id} value={cls.name}>{cls.name}</option>)}</select></div>
-                    <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Trạng thái:</label><select value={historyFilterStatus} onChange={(e) => setHistoryFilterStatus(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white"><option value="">Tất cả trạng thái</option><option value="Có mặt">Có mặt</option><option value="Vắng">Vắng</option><option value="Muộn">Muộn</option></select></div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Thời gian (Từ - Đến):</label>
-                      <div className="flex items-center gap-2">
-                        <input type="date" value={historyStartDate} onChange={(e) => setHistoryStartDate(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" title="Từ ngày" />
-                        <span className="text-gray-400">-</span>
-                        <input type="date" value={historyEndDate} onChange={(e) => setHistoryEndDate(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" title="Đến ngày" />
-                      </div>
+              {/* TAB 6: LỊCH SỬ LƯƠNG */}
+              {activeTab === 'salary' && (
+                <div className="flex flex-col h-full">
+                  <div className="p-6 bg-gradient-to-r from-amber-500 to-orange-400 flex justify-between items-center text-white">
+                    <h2 className="text-lg font-bold flex items-center gap-2"><span className="text-2xl">💰</span> Lịch sử lương & Thời gian dạy</h2>
+                    <div className="text-right">
+                      <div className="text-xs opacity-80 font-semibold">Tổng thu nhập</div>
+                      <div className="text-2xl font-extrabold">{totalSalary.toLocaleString('vi-VN')} ₫</div>
                     </div>
                   </div>
-                  <div className="flex flex-col md:flex-row items-end justify-between gap-4 border-t border-gray-100 pt-4">
-                    <div className="w-full md:w-1/2">
-                      <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Tìm kiếm:</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span className="text-gray-400 text-sm">🔍</span></div>
-                        <input type="text" placeholder="Tên sinh viên, mã SV..." value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-emerald-500 bg-white text-gray-700" />
-                      </div>
-                    </div>
-                    <button onClick={clearHistoryFilters} className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors w-fit mb-1"><span className="text-lg leading-none">🗑️</span> Xóa bộ lọc</button>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Tổng điểm danh</span><span className="text-3xl font-extrabold text-emerald-600">{histTotal}</span></div>
-                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Có mặt</span><span className="text-3xl font-extrabold text-green-500 flex items-center gap-2"><span className="bg-green-100 rounded px-1 pb-1 text-xl">✅</span> {histPresent}</span></div>
-                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Muộn</span><span className="text-3xl font-extrabold text-yellow-500 flex items-center gap-2">🕒 {histLate}</span></div>
-                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Vắng</span><span className="text-3xl font-extrabold text-red-500 flex items-center gap-2">❌ {histAbsent}</span></div>
-                </div>
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
-                      <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs">
-                        <tr><th className="px-6 py-4 font-bold text-center w-16 uppercase tracking-wider">STT</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Sinh viên</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Lớp học</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Ngày học</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Trạng thái</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Ghi chú</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Thời gian điểm danh</th></tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {filteredHistory.length === 0 ? (
-                          <tr><td colSpan={7} className="text-center py-16 text-gray-400 font-medium">Chưa có dữ liệu điểm danh nào.</td></tr>
-                        ) : (
-                          filteredHistory.map((item, index) => {
-                            const isPresent = item.status === 'Có mặt'; const isAbsent = item.status === 'Vắng';
-                            const userInfo = usersData.find(u => u.name === item.studentName);
-                            return (
-                              <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                                <td className="px-6 py-4 text-center font-medium text-gray-500">{index + 1}</td>
-                                <td className="px-6 py-4"><div className="font-bold text-gray-800">{item.studentName}</div><div className="text-xs text-gray-400 mt-0.5">{userInfo?.username || "N/A"}</div></td>
-                                <td className="px-6 py-4"><div className="font-bold text-gray-800">{item.className}</div><div className="text-xs text-gray-400 mt-0.5">{item.subjectName}</div></td>
-                                <td className="px-6 py-4 text-center font-medium text-gray-600">{item.date}</td>
-                                <td className="px-6 py-4 text-center"><span className={`inline-block px-3 py-1 rounded text-xs font-bold border ${isPresent ? 'bg-green-50 border-green-100 text-green-500' : isAbsent ? 'bg-red-50 border-red-100 text-red-500' : 'bg-yellow-50 border-yellow-100 text-yellow-600'}`}>{item.status}</span></td>
-                                <td className="px-6 py-4 text-gray-500">{item.note}</td>
-                                <td className="px-6 py-4 text-center"><div className="text-gray-700">{item.timestamp.split(' ')[0]}</div><div className="text-xs text-gray-400 mt-0.5">{item.timestamp.split(' ')[1]}</div></td>
-                              </tr>
-                            )
-                          })
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* TAB 4: QUẢN LÝ BUỔI HỌC */}
-          {activeTab === 'sessions' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
-              <div className="p-6 flex justify-between items-center border-b border-gray-100 bg-white">
-                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><span className="text-emerald-600 text-2xl">📅</span> Quản lý buổi học</h2>
-                <button onClick={openAddSession} className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-5 rounded-md text-sm shadow-sm transition-colors">+ Thêm buổi học</button>
-              </div>
-              <div className="p-6 bg-gray-50 border-b border-gray-100">
-                <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Lớp học:</label>
-                <select value={sessionSelectedClass} onChange={(e) => setSessionSelectedClass(e.target.value)} className="w-full md:w-1/2 border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
-                  <option value="">Chọn lớp học...</option>{myClasses.map(c => <option key={c._id} value={c._id}>{c.name} - {c.subject}</option>)}
-                </select>
-              </div>
-              {sessionSelectedClass && selectedSessionClassData ? (
-                <div className="p-6 flex-1 overflow-y-auto">
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="bg-gray-50/70 p-5 border-b border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-                      <div>
-                        <div className="font-bold text-gray-800 text-lg mb-1">{selectedSessionClassData.name} - {selectedSessionClassData.subject}</div>
-                        <div className="text-sm text-gray-500">Giảng viên: <span className="font-medium text-gray-700">{selectedSessionClassData.instructor}</span></div>
-                      </div>
-                      <div className="flex gap-8 text-center bg-white px-6 py-3 rounded-lg border border-gray-200 shadow-sm">
-                        <div><div className="text-2xl font-extrabold text-gray-800">{mergedSessionsForClass.length}</div><div className="text-xs text-gray-500 uppercase font-semibold mt-1">Tổng buổi học</div></div>
-                        <div className="w-px bg-gray-200"></div>
-                        <div><div className="text-2xl font-extrabold text-green-500">{sessionAttendedCount}</div><div className="text-xs text-green-600 uppercase font-semibold mt-1">Đã học</div></div>
-                        <div className="w-px bg-gray-200"></div>
-                        <div><div className="text-2xl font-extrabold text-emerald-600">{sessionUpcomingCount}</div><div className="text-xs text-emerald-600 uppercase font-semibold mt-1">Sắp tới</div></div>
-                      </div>
+                  <div className="bg-amber-50 p-4 border-b border-amber-100 grid grid-cols-3 gap-4 divide-x divide-amber-200">
+                    <div className="text-center px-4">
+                      <div className="text-2xl font-extrabold text-amber-600">{salaryHistory.length}</div>
+                      <div className="text-xs text-gray-500 uppercase font-bold mt-1">Số ca đã dạy</div>
                     </div>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
-                        <thead className="bg-white border-b border-gray-200 text-gray-500 text-xs">
-                          <tr><th className="px-6 py-4 font-bold text-center w-16 uppercase tracking-wider">STT</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Ngày học</th><th className="px-6 py-4 font-bold uppercase tracking-wider w-1/3">Ghi chú</th><th className="px-6 py-4 font-bold uppercase tracking-wider text-center">Trạng thái điểm danh</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Thao tác</th></tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {mergedSessionsForClass.length === 0 ? (
-                            <tr><td colSpan={5} className="text-center py-12 text-gray-400 font-medium">Lớp học này chưa được cấu hình ngày bắt đầu hoặc lịch học.</td></tr>
-                          ) : (
-                            mergedSessionsForClass.map((sess, index) => (
-                              <tr key={sess.id} className="hover:bg-gray-50/50 transition-colors">
-                                <td className="px-6 py-4 text-center font-medium text-gray-500">{index + 1}</td>
-                                <td className="px-6 py-4"><div className="font-bold text-gray-800">{sess.date}</div><div className="text-xs text-gray-400 mt-0.5 capitalize">{sess.dayOfWeek}</div></td>
-                                <td className="px-6 py-4 text-gray-500">{sess.note || '-'}</td>
-                                <td className="px-6 py-4 text-center"><span className={`inline-block px-3 py-1.5 rounded text-xs font-bold border ${sess.status === 'Đã điểm danh' ? 'bg-white border-green-400 text-green-600' : 'bg-gray-50 border-gray-300 text-gray-500'}`}>{sess.status}</span></td>
-                                <td className="px-6 py-4 flex justify-center items-center gap-4 text-lg">
-                                  <button onClick={() => { const cls = myClasses.find(c => c._id === sess.classId || c._id === sessionSelectedClass); if (cls) openClassDetail(cls); }} className="text-gray-400 hover:text-gray-600 transition-colors" title="Xem chi tiết lớp học">👁️</button>
-                                  <button onClick={() => openEditSession(sess)} className="text-gray-400 hover:text-emerald-600 transition-colors" title="Sửa ghi chú/trạng thái">✏️</button>
-                                  {!sess.isAuto && (<button onClick={() => deleteSession(sess.id, sess.isAuto)} className="text-gray-400 hover:text-red-500 transition-colors" title="Xóa buổi bổ sung">🗑️</button>)}
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
+                    <div className="text-center px-4">
+                      <div className="text-2xl font-extrabold text-orange-500">
+                        {salaryHistory.reduce((sum: number, s: any) => {
+                          let mins = Number(s.duration);
+                          if (!mins && s.startTime && s.endTime) {
+                            const diffMs = new Date(s.endTime).getTime() - new Date(s.startTime).getTime();
+                            mins = Math.max(1, Math.ceil(diffMs / 60000));
+                          }
+                          return sum + (mins || 0);
+                        }, 0)} phút
+                      </div>
+                      <div className="text-xs text-gray-500 uppercase font-bold mt-1">Tổng thời gian</div>
+                    </div>
+                    <div className="text-center px-4">
+                      <div className="text-2xl font-extrabold text-emerald-600">{totalSalary.toLocaleString('vi-VN')} ₫</div>
+                      <div className="text-xs text-gray-500 uppercase font-bold mt-1">Tổng lương</div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center py-24 text-gray-400 bg-white"><span className="text-5xl mb-4">👆</span><p className="font-semibold text-gray-500 text-lg">Vui lòng chọn Lớp học ở trên</p><p className="text-sm mt-1">để xem danh sách buổi học của lớp.</p></div>
-              )}
-            </div>
-          )}
 
-          {/* TAB 5: LỊCH GIẢNG DẠY */}
-          {activeTab === 'schedule' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
-              <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-500 flex justify-between items-center text-white">
-                <h2 className="text-lg font-bold flex items-center gap-2"><span className="text-2xl">📆</span> Lịch giảng dạy</h2>
-                <div className="flex bg-white/20 p-1 rounded-lg">
-                  <button onClick={() => setScheduleViewMode('calendar')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors flex items-center gap-2 ${scheduleViewMode === 'calendar' ? 'bg-white text-emerald-600 shadow-sm' : 'text-white hover:bg-white/10'}`}>📅 Lịch</button>
-                  <button onClick={() => setScheduleViewMode('list')} className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors flex items-center gap-2 ${scheduleViewMode === 'list' ? 'bg-white text-emerald-600 shadow-sm' : 'text-white hover:bg-white/10'}`}>🗂️ Danh sách</button>
-                </div>
-              </div>
-              <div className="bg-gray-50 p-4 border-b border-gray-200 grid grid-cols-2 md:grid-cols-4 gap-4 divide-x divide-gray-200">
-                <div className="text-center px-4"><div className="text-2xl font-extrabold text-emerald-600 flex items-center justify-center gap-2">📚 {schedTotalClasses}</div><div className="text-xs text-gray-500 uppercase font-bold mt-1">Lớp Đang Dạy</div></div>
-                <div className="text-center px-4"><div className="text-2xl font-extrabold text-green-500 flex items-center justify-center gap-2">🕒 {schedTotalSessions}</div><div className="text-xs text-gray-500 uppercase font-bold mt-1">Tổng Số Buổi</div></div>
-                <div className="text-center px-4"><div className="text-2xl font-extrabold text-purple-500 flex items-center justify-center gap-2">📝 {schedTotalSubjects}</div><div className="text-xs text-gray-500 uppercase font-bold mt-1">Môn Học</div></div>
-                <div className="text-center px-4"><div className="text-2xl font-extrabold text-orange-500 flex items-center justify-center gap-2">👤 {schedTotalStudents}</div><div className="text-xs text-gray-500 uppercase font-bold mt-1">Sinh Viên</div></div>
-              </div>
-              <div className="p-6 overflow-y-auto flex-1 bg-white">
-                <div className="mb-6 flex flex-col md:flex-row justify-between items-end gap-4">
-                  <div className="flex gap-4 w-full md:w-auto">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Khoảng thời gian:</label>
-                      <div className="flex items-center gap-2">
-                        <input type="date" value={scheduleStartDate} onChange={(e) => setScheduleStartDate(e.target.value)} className="w-40 border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" />
-                        <span className="text-gray-400">→</span>
-                        <input type="date" value={scheduleEndDate} onChange={(e) => setScheduleEndDate(e.target.value)} className="w-40 border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" />
-                      </div>
-                    </div>
-                    <div className="w-64">
-                      <label className="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wide">Môn học:</label>
-                      <select value={scheduleSubject} onChange={(e) => setScheduleSubject(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white">
-                        <option value="">Tất cả môn học</option>
-                        {uniqueSubjects.map((sub, idx) => <option key={idx} value={sub as string}>{sub as string}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                  <button onClick={clearScheduleFilters} className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors h-10 px-4 border border-transparent hover:border-red-100 rounded-md">Xóa bộ lọc</button>
-                </div>
-                {scheduleViewMode === 'calendar' ? (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-                      <div className="flex items-center gap-4 text-sm font-semibold">
-                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-green-400 inline-block"></span> Ca Sáng (1-2)</div>
-                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-blue-400 inline-block"></span> Ca Chiều (3-4)</div>
-                        <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-purple-400 inline-block"></span> Ca Tối (5-6)</div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <button onClick={handleToday} className="px-4 py-1.5 text-sm font-bold text-gray-600 border border-gray-300 rounded hover:bg-gray-100 transition-colors">Hôm nay</button>
-                        <div className="flex items-center gap-2 border border-gray-300 rounded overflow-hidden">
-                          <button onClick={handlePrevMonth} className="px-3 py-1.5 hover:bg-gray-100 font-bold text-gray-600 transition-colors">&lt;</button>
-                          <span className="px-4 py-1.5 font-bold text-emerald-600 bg-white min-w-[120px] text-center border-x border-gray-300">{monthNames[currentMonth]} {currentYear}</span>
-                          <button onClick={handleNextMonth} className="px-3 py-1.5 hover:bg-gray-100 font-bold text-gray-600 transition-colors">&gt;</button>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-7 bg-gray-200 gap-px border-b border-gray-200">
-                      {dayNames.map(day => (<div key={day} className="bg-white py-3 text-center text-xs font-extrabold text-gray-500 uppercase tracking-wider">{day}</div>))}
-                      {Array.from({ length: firstDay }).map((_, idx) => (<div key={`empty-${idx}`} className="bg-gray-50 min-h-[120px]"></div>))}
-                      {Array.from({ length: daysInCurrentMonth }).map((_, idx) => {
-                        const dayNum = idx + 1;
-                        const dateStr = `${String(dayNum).padStart(2, '0')}/${String(currentMonth + 1).padStart(2, '0')}/${currentYear}`;
-                        const sessionsOnThisDay = filteredScheduleSessions.filter(s => s.date === dateStr);
-                        const isToday = new Date().getDate() === dayNum && new Date().getMonth() === currentMonth && new Date().getFullYear() === currentYear;
-                        return (
-                          <div key={dayNum} className={`bg-white min-h-[120px] p-2 flex flex-col gap-1 transition-colors hover:bg-emerald-50/30 ${isToday ? 'ring-2 ring-inset ring-emerald-500 bg-emerald-50/10' : ''}`}>
-                            <div className={`text-right text-xs font-bold mb-1 ${isToday ? 'text-emerald-600' : 'text-gray-400'}`}>{dayNum}</div>
-                            <div className="flex flex-col gap-1.5 overflow-y-auto max-h-[100px]">
-                              {sessionsOnThisDay.map((sess, sIdx) => {
-                                let colorClass = "border-gray-400 bg-gray-50 text-gray-700";
-                                if (sess.shift?.includes("Ca 1") || sess.shift?.includes("Ca 2")) colorClass = "border-green-400 bg-green-50 text-green-800";
-                                else if (sess.shift?.includes("Ca 3") || sess.shift?.includes("Ca 4")) colorClass = "border-blue-400 bg-blue-50 text-blue-800";
-                                else if (sess.shift?.includes("Ca 5") || sess.shift?.includes("Ca 6")) colorClass = "border-purple-400 bg-purple-50 text-purple-800";
-                                return (
-                                  <div key={sIdx} onClick={() => handleJumpToAttendance(sess)} className={`border-l-4 rounded-r px-2 py-1.5 text-[10px] leading-tight cursor-pointer hover:opacity-80 transition-opacity shadow-sm ${colorClass}`} title={`Bấm để Điểm danh lớp ${sess.className}`}>
-                                    <div className="font-bold truncate">{sess.className}</div>
-                                    <div className="truncate opacity-80">{sess.subject}</div>
-                                    <div className="mt-0.5 font-semibold flex justify-between"><span>{sess.room || 'N/A'}</span><span>{sess.shift ? sess.shift.split(' ')[0] : ''}</span></div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )
-                      })}
-                      {Array.from({ length: (7 - ((firstDay + daysInCurrentMonth) % 7)) % 7 }).map((_, idx) => (<div key={`empty-end-${idx}`} className="bg-gray-50 min-h-[120px]"></div>))}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
-                        <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs">
-                          <tr><th className="px-6 py-4 font-bold uppercase tracking-wider">Ngày giảng dạy</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Thời gian</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Lớp học & Ca học</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Môn học</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Ghi chú</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Thao tác</th></tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {sortedScheduleSessions.length === 0 ? (
-                            <tr><td colSpan={6} className="text-center py-16 text-gray-400 font-medium">Không tìm thấy lịch giảng dạy nào trong khoảng thời gian này.</td></tr>
-                          ) : (
-                            sortedScheduleSessions.map((sess, index) => (
-                              <tr key={index} className="hover:bg-gray-50/50 transition-colors">
-                                <td className="px-6 py-4"><div className="font-bold text-gray-800">{sess.date}</div><div className="text-xs text-gray-500 mt-0.5 capitalize">{sess.dayOfWeek}</div></td>
-                                <td className="px-6 py-4 font-medium text-gray-600"><div className="bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-md inline-flex items-center gap-1 text-xs font-semibold">🕒 {extractTimeFromShift(sess.shift)}</div></td>
-                                <td className="px-6 py-4"><div className="font-bold text-gray-800 flex items-center gap-2">🏫 {sess.className}</div><div className="mt-1"><span className="bg-orange-50 text-orange-600 border border-orange-100 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{extractCaFromShift(sess.shift)}</span></div></td>
-                                <td className="px-6 py-4 font-semibold text-gray-700">{sess.subject}</td>
-                                <td className="px-6 py-4 text-gray-500">{sess.note !== '-' ? sess.note : 'Không có'}</td>
-                                <td className="px-6 py-4 flex justify-center items-center gap-4">
-                                  <button onClick={() => { const cls = myClasses.find(c => c._id === sess.classId); if (cls) openClassDetail(cls); }} className="text-gray-400 hover:text-gray-600 transition-colors text-lg" title="Xem chi tiết lớp học">👁️</button>
-                                  <button onClick={() => handleJumpToAttendance(sess)} className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-md font-bold text-xs shadow-sm transition-colors flex items-center gap-1">✓ Điểm danh</button>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 6: LỊCH SỬ LƯƠNG */}
-          {activeTab === 'salary' && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
-              <div className="p-6 bg-gradient-to-r from-amber-500 to-orange-400 flex justify-between items-center text-white">
-                <h2 className="text-lg font-bold flex items-center gap-2"><span className="text-2xl">💰</span> Lịch sử lương & Thời gian dạy</h2>
-                <div className="text-right">
-                  <div className="text-xs opacity-80 font-semibold">Tổng thu nhập</div>
-                  <div className="text-2xl font-extrabold">{totalSalary.toLocaleString('vi-VN')} ₫</div>
-                </div>
-              </div>
-
-              {/* Tóm tắt thống kê */}
-              <div className="bg-amber-50 p-4 border-b border-amber-100 grid grid-cols-3 gap-4 divide-x divide-amber-200">
-  <div className="text-center px-4">
-    <div className="text-2xl font-extrabold text-amber-600">{salaryHistory.length}</div>
-    <div className="text-xs text-gray-500 uppercase font-bold mt-1">Số ca đã dạy</div>
-  </div>
-  <div className="text-center px-4">
-    <div className="text-2xl font-extrabold text-orange-500">
-      {/* Sửa lại: Ép kiểu dữ liệu và làm tròn ít nhất 1 phút nếu bấm test quá nhanh */}
-      {salaryHistory.reduce((sum: number, s: any) => {
-        let mins = Number(s.duration);
-        if (!mins && s.startTime && s.endTime) {
-          const diffMs = new Date(s.endTime).getTime() - new Date(s.startTime).getTime();
-          mins = Math.max(1, Math.ceil(diffMs / 60000)); // Tính tay bù lại, ít nhất là 1 phút
-        }
-        return sum + (mins || 0);
-      }, 0)} phút
-    </div>
-    <div className="text-xs text-gray-500 uppercase font-bold mt-1">Tổng thời gian</div>
-  </div>
-  <div className="text-center px-4">
-    <div className="text-2xl font-extrabold text-emerald-600">{totalSalary.toLocaleString('vi-VN')} ₫</div>
-    <div className="text-xs text-gray-500 uppercase font-bold mt-1">Tổng lương</div>
-  </div>
-</div>
-
-              <div className="flex-1 overflow-y-auto p-6">
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
-                      <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs">
-                        <tr>
-                          <th className="px-6 py-4 font-bold text-center w-16 uppercase tracking-wider">STT</th>
-                          <th className="px-6 py-4 font-bold uppercase tracking-wider">Ngày dạy</th>
-                          <th className="px-6 py-4 font-bold uppercase tracking-wider">Lớp học</th>
-                          <th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Bắt đầu</th>
-                          <th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Kết thúc</th>
-                          <th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Thời gian dạy</th>
-                          <th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Lương nhận được</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {salaryHistory.length === 0 ? (
-                          <tr>
-                            <td colSpan={7} className="text-center py-20 text-gray-400">
-                              <div className="flex flex-col items-center gap-2">
-                                <span className="text-4xl">💸</span>
-                                <p className="font-semibold text-gray-500">Chưa có lịch sử lương nào.</p>
-                                <p className="text-xs">Bắt đầu ca dạy trong Tab <strong>Chấm công</strong> để tạo bản ghi lương.</p>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : (
-                          salaryHistory.map((item: any, index: number) => (
-                            <tr key={item._id || index} className="hover:bg-amber-50/30 transition-colors">
-                              <td className="px-6 py-4 text-center font-medium text-gray-500">{index + 1}</td>
-                              <td className="px-6 py-4">
-                                {/* ĐÃ SỬA: HIỂN THỊ NGÀY THÁNG ĐẸP */}
-                                <div className="font-bold text-gray-800">{item.startTime ? new Date(item.startTime).toLocaleDateString('vi-VN') : '-'}</div>
-                              </td>
-                              <td className="px-6 py-4">
-                                <div className="font-bold text-gray-800">{item.classId?.name || 'Đang cập nhật'}</div>
-                                <div className="text-xs text-gray-400 mt-0.5">{item.classId?.subject || ''}</div>
-                              </td>
-                              <td className="px-6 py-4 text-center font-medium text-gray-600">
-                                {item.startTime ? new Date(item.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '-'}
-                              </td>
-                              <td className="px-6 py-4 text-center font-medium text-gray-600">
-                                {item.endTime ? new Date(item.endTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '-'}
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <span className="px-3 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 rounded-md text-xs font-bold">
-                                  {item.duration ? `${item.duration} phút` : '-'}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 text-center">
-                                <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-md text-sm font-extrabold">
-                                  {item.salaryEarned ? item.salaryEarned.toLocaleString('vi-VN') + ' ₫' : '-'}
-                                </span>
-                              </td>
+                  <div className="flex-1 overflow-y-auto p-6 bg-white">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
+                          <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs">
+                            <tr>
+                              <th className="px-6 py-4 font-bold text-center w-16 uppercase tracking-wider">STT</th>
+                              <th className="px-6 py-4 font-bold uppercase tracking-wider">Ngày dạy</th>
+                              <th className="px-6 py-4 font-bold uppercase tracking-wider">Lớp học</th>
+                              <th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Bắt đầu</th>
+                              <th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Kết thúc</th>
+                              <th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Thời gian dạy</th>
+                              <th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Lương nhận được</th>
                             </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {salaryHistory.length === 0 ? (
+                              <tr>
+                                <td colSpan={7} className="text-center py-20 text-gray-400">
+                                  <div className="flex flex-col items-center gap-2">
+                                    <span className="text-4xl">💸</span>
+                                    <p className="font-semibold text-gray-500">Chưa có lịch sử lương nào.</p>
+                                  </div>
+                                </td>
+                              </tr>
+                            ) : (
+                              salaryHistory.map((item: any, index: number) => (
+                                <tr key={item._id || index} className="hover:bg-amber-50/30 transition-colors">
+                                  <td className="px-6 py-4 text-center font-medium text-gray-500">{index + 1}</td>
+                                  <td className="px-6 py-4">
+                                    <div className="font-bold text-gray-800">{item.startTime ? new Date(item.startTime).toLocaleDateString('vi-VN') : '-'}</div>
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <div className="font-bold text-gray-800">{item.classId?.name || 'Đang cập nhật'}</div>
+                                    <div className="text-xs text-gray-400 mt-0.5">{item.classId?.subject || ''}</div>
+                                  </td>
+                                  <td className="px-6 py-4 text-center font-medium text-gray-600">
+                                    {item.startTime ? new Date(item.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                  </td>
+                                  <td className="px-6 py-4 text-center font-medium text-gray-600">
+                                    {item.endTime ? new Date(item.endTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '-'}
+                                  </td>
+                                  <td className="px-6 py-4 text-center">
+                                    <span className="px-3 py-1.5 bg-blue-50 border border-blue-100 text-blue-700 rounded-md text-xs font-bold">
+                                      {item.duration ? `${item.duration} phút` : '-'}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-4 text-center">
+                                    <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-md text-sm font-extrabold">
+                                      {item.salaryEarned ? item.salaryEarned.toLocaleString('vi-VN') + ' ₫' : '-'}
+                                    </span>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
             </div>
           )}
+
+          {/* HIỂN THỊ ĐỘC LẬP TAB THÔNG TIN CÁ NHÂN KHI ĐƯỢC CHỌN */}
+          {activeTab === 'profile' && <ProfileSettings />}
 
         </div>
       </main>

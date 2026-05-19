@@ -21,7 +21,6 @@ export default function RegisterPage() {
         setMessage("❌ Mật khẩu xác nhận không khớp!");
         return;
     }
-
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
@@ -102,9 +101,7 @@ export default function RegisterPage() {
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Bạn là ai?</label>
                 <select name="role" onChange={handleChange} className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-sm bg-gray-50/50 font-semibold text-gray-700 cursor-pointer">
-                  <option value="">-- Không chọn (Mặc định: Admin) --</option>
-                  <option value="student">🎓 Tôi là Học sinh</option>
-                  <option value="instructor">👨‍🏫 Tôi là Giáo viên</option>
+                  <option value="">Tài khoản Admin --</option>
                 </select>
               </div>
 
