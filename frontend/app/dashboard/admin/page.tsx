@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import * as XLSX from "xlsx";
 import ProfileSettings from "@/components/ProfileSettings";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function AdminDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -243,10 +244,10 @@ export default function AdminDashboard() {
   
   const handleMajorSubmit = async (e: any) => { e.preventDefault(); try { let url = "/api/majors", method = "POST"; if (isMajorEdit && editMajorId) { url = `/api/majors/${editMajorId}`; method = "PUT"; } const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(majorForm) }); if (res.ok) { alert("Thành công!"); setIsMajorModalOpen(false); fetchMajors(); } } catch (error) { console.error(error); } };
   const deleteMajor = async (id: string, name: string) => { if (confirm(`Xoá "${name}"?`)) { await fetch(`/api/majors/${id}`, { method: "DELETE" }); fetchMajors(); } };
-  const openMajorEdit = (major: any) => { setIsMajorEdit(true); setEditMajorId(major._id); setMajorForm({ code: major.code, name: major.name, description: major.description || "", status: major.status }); setIsMajorModalOpen(true); };
+  const openMajorEdit = (major: any) => { setIsMajorEdit(true); setEditMajorId(major._id); setMajorForm({ code: major.code, name: major.name, description: major.description || "", status: major.status || "Hoạt động" }); setIsMajorModalOpen(true); };
   const handleSubjectSubmit = async (e: any) => { e.preventDefault(); try { let url = "/api/subjects", method = "POST"; if (isSubjectEdit && editSubjectId) { url = `/api/subjects/${editSubjectId}`; method = "PUT"; } const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(subjectForm) }); if (res.ok) { alert("Thành công!"); setIsSubjectModalOpen(false); fetchSubjects(); } } catch (error) { console.error(error); } };
   const deleteSubject = async (id: string, name: string) => { if (confirm(`Xoá môn "${name}"?`)) { await fetch(`/api/subjects/${id}`, { method: "DELETE" }); fetchSubjects(); } };
-  const openSubjectEdit = (sub: any) => { setIsSubjectEdit(true); setEditSubjectId(sub._id); setSubjectForm({ code: sub.code, name: sub.name, description: sub.description || "", status: sub.status }); setIsSubjectModalOpen(true); };
+  const openSubjectEdit = (sub: any) => { setIsSubjectEdit(true); setEditSubjectId(sub._id); setSubjectForm({ code: sub.code, name: sub.name, description: sub.description || "", status: sub.status || "Hoạt động" }); setIsSubjectModalOpen(true); };
 
   if (!user) return <div className="p-10 text-center">Đang tải...</div>;
 
@@ -275,7 +276,7 @@ export default function AdminDashboard() {
   const studentsList = usersData.filter(u => u.role === 'student');
 
   return (
-    <div className="flex h-screen bg-[#f4f7f6] font-sans text-gray-800">
+    <div className="dashboard-theme flex h-screen bg-[#f4f7f6] font-sans text-gray-800">
       
       {/* SIDEBAR BÊN TRÁI */}
       <aside className="w-[260px] bg-white hidden md:flex flex-col shadow-sm z-10 shrink-0 border-r border-gray-100">
@@ -294,7 +295,10 @@ export default function AdminDashboard() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="h-16 bg-gradient-to-r from-emerald-600 to-teal-500 flex items-center justify-between px-8 shadow-sm shrink-0">
           <h1 className="text-lg font-semibold text-white">Quản trị hệ thống</h1>
-          <div className="text-white text-sm font-semibold flex items-center gap-2"><span>🛡️ Admin: {user.name}</span></div>
+          <div className="text-white text-sm font-semibold flex items-center gap-3">
+            <ThemeToggle />
+            <span>🛡️ Admin: {user.name}</span>
+          </div>
         </header>
 
         <div className="bg-emerald-500 px-8 py-2 text-white/80 text-sm flex items-center shrink-0 shadow-sm">
@@ -663,8 +667,117 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {isMajorModalOpen && (<div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div className="bg-white rounded-xl shadow-2xl p-6 w-96"><h3 className="font-bold text-lg mb-4">{isMajorEdit?"Sửa":"Thêm"} Ngành</h3><form onSubmit={handleMajorSubmit} className="space-y-3"><input placeholder="Mã" required value={majorForm.code} onChange={e=>setMajorForm({...majorForm,code:e.target.value.toUpperCase()})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 uppercase" disabled={isMajorEdit} /><input placeholder="Tên" required value={majorForm.name} onChange={e=>setMajorForm({...majorForm,name:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" /><div className="flex justify-end gap-2"><button type="button" onClick={()=>setIsMajorModalOpen(false)} className="border p-2 rounded">Huỷ</button><button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded">Lưu</button></div></form></div></div>)}
-      {isSubjectModalOpen && (<div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"><div className="bg-white rounded-xl shadow-2xl p-6 w-96"><h3 className="font-bold text-lg mb-4">{isSubjectEdit?"Sửa":"Thêm"} Môn</h3><form onSubmit={handleSubjectSubmit} className="space-y-3"><input placeholder="Mã" required value={subjectForm.code} onChange={e=>setSubjectForm({...subjectForm,code:e.target.value.toUpperCase()})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 uppercase" disabled={isSubjectEdit} /><input placeholder="Tên" required value={subjectForm.name} onChange={e=>setSubjectForm({...subjectForm,name:e.target.value})} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500" /><div className="flex justify-end gap-2"><button type="button" onClick={()=>setIsSubjectModalOpen(false)} className="border p-2 rounded">Huỷ</button><button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded">Lưu</button></div></form></div></div>)}
+      {isMajorModalOpen && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 className="font-bold text-lg mb-4">{isMajorEdit ? "Sửa" : "Thêm"} chuyên ngành</h3>
+            <form onSubmit={handleMajorSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Mã chuyên ngành</label>
+                <input
+                  placeholder="VD: CNTT"
+                  required
+                  value={majorForm.code}
+                  onChange={e => setMajorForm({ ...majorForm, code: e.target.value.toUpperCase() })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 uppercase"
+                  disabled={isMajorEdit}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Tên chuyên ngành</label>
+                <input
+                  placeholder="Nhập tên chuyên ngành"
+                  required
+                  value={majorForm.name}
+                  onChange={e => setMajorForm({ ...majorForm, name: e.target.value })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Mô tả</label>
+                <textarea
+                  placeholder="Nhập mô tả chuyên ngành"
+                  rows={4}
+                  value={majorForm.description}
+                  onChange={e => setMajorForm({ ...majorForm, description: e.target.value })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Trạng thái</label>
+                <select
+                  value={majorForm.status}
+                  onChange={e => setMajorForm({ ...majorForm, status: e.target.value })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500"
+                >
+                  <option value="Hoạt động">Hoạt động</option>
+                  <option value="Đã xoá">Đã xoá</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setIsMajorModalOpen(false)} className="border border-gray-300 px-4 py-2 rounded-md font-semibold text-gray-700 hover:bg-gray-50">Huỷ</button>
+                <button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded-md font-semibold">Lưu</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {isSubjectModalOpen && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 className="font-bold text-lg mb-4">{isSubjectEdit ? "Sửa" : "Thêm"} môn học</h3>
+            <form onSubmit={handleSubjectSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Mã môn học</label>
+                <input
+                  placeholder="VD: WEB101"
+                  required
+                  value={subjectForm.code}
+                  onChange={e => setSubjectForm({ ...subjectForm, code: e.target.value.toUpperCase() })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 uppercase"
+                  disabled={isSubjectEdit}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Tên môn học</label>
+                <input
+                  placeholder="Nhập tên môn học"
+                  required
+                  value={subjectForm.name}
+                  onChange={e => setSubjectForm({ ...subjectForm, name: e.target.value })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Mô tả</label>
+                <textarea
+                  placeholder="Nhập mô tả môn học"
+                  rows={4}
+                  value={subjectForm.description}
+                  onChange={e => setSubjectForm({ ...subjectForm, description: e.target.value })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Trạng thái</label>
+                <select
+                  value={subjectForm.status}
+                  onChange={e => setSubjectForm({ ...subjectForm, status: e.target.value })}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500"
+                >
+                  <option value="Hoạt động">Hoạt động</option>
+                  <option value="Đã xoá">Đã xoá</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setIsSubjectModalOpen(false)} className="border border-gray-300 px-4 py-2 rounded-md font-semibold text-gray-700 hover:bg-gray-50">Huỷ</button>
+                <button type="submit" className="bg-emerald-600 text-white hover:bg-emerald-700 px-4 py-2 rounded-md font-semibold">Lưu</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

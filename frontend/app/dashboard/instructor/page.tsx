@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { QRCodeSVG } from 'qrcode.react';
 import ProfileSettings from "@/components/ProfileSettings";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function InstructorDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -29,6 +30,7 @@ export default function InstructorDashboard() {
   const [attendanceList, setAttendanceList] = useState<any[]>([]);
   const [qrToken, setQrToken] = useState("");
   const [qrTimeLeft, setQrTimeLeft] = useState(0);
+  const [qrSize, setQrSize] = useState(68);
 
   // ================= STATE LỊCH SỬ ĐIỂM DANH =================
   const [historyFilterClass, setHistoryFilterClass] = useState("");
@@ -60,16 +62,38 @@ export default function InstructorDashboard() {
   // ================= ĐẾM NGƯỢC QR CODE BIẾN ĐỔI THEO LỚP ĐANG CHỌN ĐỂ ĐIỂM DANH =================
   const handleGenerateQR = async () => {
     if (!attSelectedClass) return alert("Vui lòng chọn lớp học trước khi tạo mã QR!");
+    if (!user?._id && !user?.id) return alert("Không tìm thấy thông tin giảng viên!");
+
     try {
-      const res = await fetch(`/api/instructor/qr/${attSelectedClass}`);
-      if (res.ok) {
-        const data = await res.json();
-        setQrToken(data.qrToken);
-        setQrTimeLeft(60);
+      const sessionRes = await fetch("/api/instructor/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          classId: attSelectedClass,
+          instructorId: user._id || user.id,
+        }),
+      });
+
+      if (!sessionRes.ok) {
+        const errorData = await sessionRes.json().catch(() => null);
+        alert(errorData?.message || "Không thể bắt đầu ca điểm danh!");
+        return;
       }
-    } catch (e) {
-      setQrToken(`QR_${attSelectedClass}_${Date.now()}`);
+
+      const session = await sessionRes.json();
+      const qrRes = await fetch(`/api/instructor/qr/${session._id}`);
+
+      if (!qrRes.ok) {
+        const errorData = await qrRes.json().catch(() => null);
+        alert(errorData?.message || "Không thể tạo mã QR!");
+        return;
+      }
+
+      const data = await qrRes.json();
+      setQrToken(data.qrToken);
       setQrTimeLeft(60);
+    } catch (e) {
+      alert("Lỗi kết nối khi tạo mã QR!");
     }
   };
 
@@ -141,7 +165,7 @@ export default function InstructorDashboard() {
 
   const fetchSalaryHistory = async (instructorId: string) => {
     try {
-      const res = await fetch(`/api/instructor/history/${instructorId}`);
+      const res = await fetch(`/api/instructor/salary-history/${instructorId}`);
       if (res.ok) setSalaryHistory(await res.json());
     } catch (e) {
       console.error("Chưa kết nối API lương");
@@ -414,7 +438,7 @@ export default function InstructorDashboard() {
   if (!user) return <div className="p-10 text-center">Đang tải dữ liệu giảng viên...</div>;
 
   return (
-    <div className="flex h-screen bg-[#f4f7f6] font-sans text-gray-800">
+    <div className="dashboard-theme flex h-screen bg-[#f4f7f6] font-sans text-gray-800">
 
       {/* SIDEBAR */}
       <aside className="w-[260px] bg-white hidden md:flex flex-col shadow-sm z-10 shrink-0 border-r border-gray-100">
@@ -435,7 +459,10 @@ export default function InstructorDashboard() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         <header className="h-16 bg-gradient-to-r from-emerald-600 to-teal-500 flex items-center justify-between px-8 shadow-sm shrink-0">
           <h1 className="text-lg font-semibold text-white">Hệ thống Giảng viên</h1>
-          <div className="text-white text-sm font-semibold flex items-center gap-2"><span>👨‍🏫 Chào thầy/cô: {user.name}</span></div>
+          <div className="text-white text-sm font-semibold flex items-center gap-3">
+            <ThemeToggle />
+            <span>👨‍🏫 Chào thầy/cô: {user.name}</span>
+          </div>
         </header>
 
         <div className="bg-emerald-500 px-8 py-2 text-white/80 text-sm flex items-center shrink-0 shadow-sm">
@@ -492,85 +519,113 @@ export default function InstructorDashboard() {
               {/* TAB 2: ĐIỂM DANH */}
               {activeTab === 'attendance' && (
                 <div className="flex flex-col h-full">
-                  <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white">
+                  <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
                     <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><span>📋</span> Điểm danh lớp học</h2>
                     <button onClick={() => setActiveTab('history')} className="text-sm font-semibold text-gray-500 hover:text-emerald-600 flex items-center gap-1">🕒 Xem lịch sử</button>
                   </div>
 
-                  {/* KHU VỰC TẠO QR ĐIỂM DANH THEO LỚP ĐANG CHỌN */}
-                  <div className="p-6 bg-emerald-50 border-b border-emerald-100 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div>
-                      <h3 className="font-bold text-emerald-800 flex items-center gap-2 text-lg">
-                        <span>📱</span> Điểm danh bằng mã QR
-                      </h3>
-                      <p className="text-sm text-emerald-600 mt-1">
-                        Sinh viên quét mã để tự động điểm danh. Mã QR chỉ có hiệu lực trong 60 giây.
-                      </p>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-emerald-200 flex flex-col items-center justify-center min-w-[250px] min-h-[160px]">
-                      {!qrToken ? (
-                        <button 
-                          onClick={handleGenerateQR} 
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-lg transition-colors shadow-sm text-sm"
-                        >
-                          Tạo mã QR (60 giây)
-                        </button>
-                      ) : (
-                        <div className="flex flex-col items-center animate-in fade-in duration-300 w-full">
-                          <div className="p-2 border-2 border-emerald-500 rounded-lg bg-white mb-3">
-                            <QRCodeSVG value={qrToken} size={110} />
+                  <div className="p-4 bg-gray-50 border-b border-gray-100 shrink-0">
+                    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_320px] gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Lớp học</label>
+                          <select value={attSelectedClass} onChange={(e) => handleSelectClassForAttendance(e.target.value)} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm text-sm">
+                            <option value="">Chọn lớp học...</option>
+                            {myClasses.map(cls => (<option key={cls._id} value={cls._id}>{cls.name} - {cls.subject}</option>))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 mb-1 uppercase tracking-wide">Buổi học / Ngày</label>
+                          <div className="flex items-center gap-2">
+                            <select value={attSelectedDate} onChange={(e) => setAttSelectedDate(e.target.value)} className="w-full border border-gray-300 rounded-md px-3 py-2 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm text-sm">
+                              <option value="">Chọn buổi học/Ngày...</option>
+                              {upcomingDates.map((dateStr) => (<option key={dateStr} value={dateStr}>{dateStr}</option>))}
+                            </select>
+                            <button className="h-9 w-9 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-500 shadow-sm shrink-0">↻</button>
                           </div>
-                          <div className="w-full text-center">
-                            <div className="text-xs font-bold text-red-500 mb-1">Hủy sau: {qrTimeLeft}s</div>
-                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${(qrTimeLeft / 60) * 100}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-emerald-800 flex items-center gap-2 text-sm"><span>📱</span> QR điểm danh</h3>
+                          <p className="text-xs text-emerald-600 mt-0.5">Hiệu lực 60 giây</p>
+                        </div>
+                        {!qrToken ? (
+                          <button
+                            onClick={handleGenerateQR}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-md transition-colors shadow-sm text-xs whitespace-nowrap"
+                          >
+                            Tạo QR
+                          </button>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <div className="p-1.5 border border-emerald-500 rounded-md bg-white">
+                              <QRCodeSVG value={qrToken} size={qrSize} />
+                            </div>
+                            <div className="w-24">
+                              <div className="text-xs font-bold text-red-500 mb-1">{qrTimeLeft}s</div>
+                              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-full bg-emerald-500 transition-all duration-1000" style={{ width: `${(qrTimeLeft / 60) * 100}%` }} />
+                              </div>
+                              <div className="flex items-center gap-1 mt-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setQrSize(size => Math.max(56, size - 24))}
+                                  className="h-7 w-7 rounded border border-emerald-200 bg-white text-emerald-700 font-bold hover:bg-emerald-50"
+                                  title="Thu nhỏ QR"
+                                >
+                                  −
+                                </button>
+                                <span className="flex-1 text-center text-[11px] font-bold text-emerald-700">{qrSize}px</span>
+                                <button
+                                  type="button"
+                                  onClick={() => setQrSize(size => Math.min(180, size + 24))}
+                                  className="h-7 w-7 rounded border border-emerald-200 bg-white text-emerald-700 font-bold hover:bg-emerald-50"
+                                  title="Phóng to QR"
+                                >
+                                  +
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* KHU VỰC CHỌN LỚP ĐIỂM DANH TAY */}
-                  <div className="p-6 bg-gray-50 border-b border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Lớp học (Của tôi):</label>
-                      <select value={attSelectedClass} onChange={(e) => handleSelectClassForAttendance(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
-                        <option value="">Chọn lớp học...</option>
-                        {myClasses.map(cls => (<option key={cls._id} value={cls._id}>{cls.name} - {cls.subject}</option>))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Buổi học / Ngày:</label>
-                      <div className="flex items-center gap-2">
-                        <select value={attSelectedDate} onChange={(e) => setAttSelectedDate(e.target.value)} className="w-full border border-gray-300 rounded-md px-4 py-2.5 outline-none focus:border-emerald-500 text-gray-700 bg-white shadow-sm">
-                          <option value="">Chọn buổi học/Ngày...</option>
-                          {upcomingDates.map((dateStr) => (<option key={dateStr} value={dateStr}>{dateStr}</option>))}
-                        </select>
-                        <button className="p-2.5 border border-gray-300 rounded-md bg-white hover:bg-gray-50 text-gray-500 shadow-sm">↻</button>
-                      </div>
-                    </div>
-                  </div>
                   {attSelectedClass && attSelectedDate ? (
-                    <div className="p-6 flex-1 overflow-y-auto">
-                      <div className="flex flex-col md:flex-row justify-between items-center mb-6 bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                        <div className="font-bold text-gray-800 text-lg">{selectedClassData?.name} - {selectedClassData?.subject} - {attSelectedDate}</div>
-                        <div className="flex items-center gap-6 text-sm font-semibold mt-4 md:mt-0"><span className="text-gray-700">Tổng: {attTotalStudents}</span><span className="text-green-600">Có mặt: {attPresentCount}</span><span className="text-yellow-600">Muộn: {attLateCount}</span><span className="text-red-500">Vắng: {attAbsentCount}</span></div>
-                      </div>
-                      <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-semibold text-gray-700">Điểm danh hàng loạt:</span>
-                          <button onClick={() => handleBulkAttendance('Có mặt')} className="bg-green-100 hover:bg-green-200 text-green-700 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả có mặt</button>
-                          <button onClick={() => handleBulkAttendance('Vắng')} className="bg-red-100 text-red-700 hover:bg-red-200 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả vắng</button>
-                          <button onClick={() => handleBulkAttendance('Muộn')} className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-4 py-1.5 rounded text-sm font-bold transition-colors">Tất cả muộn</button>
+                    <div className="p-4 flex-1 min-h-0 flex flex-col">
+                      <div className="flex flex-col xl:flex-row justify-between gap-3 mb-3 bg-white p-3 rounded-lg border border-gray-200 shadow-sm shrink-0">
+                        <div className="min-w-0">
+                          <div className="font-bold text-gray-800 text-base truncate">{selectedClassData?.name} - {selectedClassData?.subject}</div>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 mt-1">
+                            <span>Ngày: <b className="text-gray-700">{attSelectedDate}</b></span>
+                            <span>Phòng: <b className="text-gray-700">{selectedClassData?.room || '-'}</b></span>
+                            <span>Ca: <b className="text-gray-700">{selectedClassData?.shift || '-'}</b></span>
+                            <span>Sĩ số: <b className="text-gray-700">{selectedClassData?.students?.length || 0}/{selectedClassData?.maxStudents || 0}</b></span>
+                          </div>
                         </div>
-                        <button onClick={handleSaveAttendance} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-md font-bold transition-colors shadow-sm flex items-center gap-2">💾 Lưu điểm danh</button>
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                          <span className="px-2.5 py-1 rounded bg-gray-100 text-gray-700">Tổng {attTotalStudents}</span>
+                          <span className="px-2.5 py-1 rounded bg-green-100 text-green-700">Có mặt {attPresentCount}</span>
+                          <span className="px-2.5 py-1 rounded bg-yellow-100 text-yellow-700">Muộn {attLateCount}</span>
+                          <span className="px-2.5 py-1 rounded bg-red-100 text-red-600">Vắng {attAbsentCount}</span>
+                        </div>
                       </div>
-                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-3 gap-3 shrink-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Hàng loạt:</span>
+                          <button onClick={() => handleBulkAttendance('Có mặt')} className="bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded text-xs font-bold transition-colors">Tất cả có mặt</button>
+                          <button onClick={() => handleBulkAttendance('Vắng')} className="bg-red-100 text-red-700 hover:bg-red-200 px-3 py-1.5 rounded text-xs font-bold transition-colors">Tất cả vắng</button>
+                          <button onClick={() => handleBulkAttendance('Muộn')} className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200 px-3 py-1.5 rounded text-xs font-bold transition-colors">Tất cả muộn</button>
+                        </div>
+                        <button onClick={handleSaveAttendance} className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-md font-bold transition-colors shadow-sm flex items-center gap-2 text-sm">💾 Lưu điểm danh</button>
+                      </div>
+                      <div className="border border-gray-200 rounded-lg overflow-auto flex-1 min-h-0 bg-white">
                         <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
-                          <thead className="bg-gray-50 border-b border-gray-200 text-gray-600">
-                            <tr><th className="px-6 py-4 font-bold w-16 text-center">STT</th><th className="px-6 py-4 font-bold">Sinh viên</th><th className="px-6 py-4 font-bold text-center w-56">Trạng thái điểm danh</th><th className="px-6 py-4 font-bold w-1/3">Ghi chú</th></tr>
+                          <thead className="bg-gray-50 border-b border-gray-200 text-gray-600 sticky top-0 z-10">
+                            <tr><th className="px-4 py-3 font-bold w-14 text-center">STT</th><th className="px-4 py-3 font-bold">Sinh viên</th><th className="px-4 py-3 font-bold text-center w-48">Trạng thái</th><th className="px-4 py-3 font-bold min-w-[260px]">Ghi chú</th></tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
                             {attendanceList.length === 0 ? (
@@ -580,15 +635,15 @@ export default function InstructorDashboard() {
                                 const isPresent = item.status === 'Có mặt'; const isAbsent = item.status === 'Vắng';
                                 return (
                                   <tr key={index} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-6 py-4 text-center font-medium text-gray-500">{index + 1}</td>
-                                    <td className="px-6 py-4"><div className="font-bold text-gray-800 mb-1">{item.studentName}</div><span className={`inline-block px-2.5 py-0.5 rounded text-xs font-bold ${isPresent ? 'bg-green-100 text-green-700' : isAbsent ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'}`}>{item.status}</span></td>
-                                    <td className="px-6 py-4 text-center">
-                                      <div className="relative inline-block w-full max-w-[160px] text-left">
-                                        <select value={item.status} onChange={(e) => handleStatusChange(index, e.target.value)} className={`appearance-none w-full bg-white border ${isPresent ? 'border-green-300 text-green-600 focus:ring-green-100' : isAbsent ? 'border-red-300 text-red-500 focus:ring-red-100' : 'border-yellow-300 text-yellow-600 focus:ring-yellow-100'} px-4 py-2 pr-8 rounded font-bold outline-none cursor-pointer text-sm focus:ring-4 transition-all shadow-sm`}><option value="Có mặt">✅ Có mặt</option><option value="Vắng">❌ Vắng</option><option value="Muộn">Muộn</option></select>
+                                    <td className="px-4 py-2.5 text-center font-medium text-gray-500">{index + 1}</td>
+                                    <td className="px-4 py-2.5"><div className="font-bold text-gray-800">{item.studentName}</div><span className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold mt-1 ${isPresent ? 'bg-green-100 text-green-700' : isAbsent ? 'bg-red-100 text-red-600' : 'bg-yellow-100 text-yellow-700'}`}>{item.status}</span></td>
+                                    <td className="px-4 py-2.5 text-center">
+                                      <div className="relative inline-block w-full max-w-[150px] text-left">
+                                        <select value={item.status} onChange={(e) => handleStatusChange(index, e.target.value)} className={`appearance-none w-full bg-white border ${isPresent ? 'border-green-300 text-green-600 focus:ring-green-100' : isAbsent ? 'border-red-300 text-red-500 focus:ring-red-100' : 'border-yellow-300 text-yellow-600 focus:ring-yellow-100'} px-3 py-1.5 pr-8 rounded font-bold outline-none cursor-pointer text-sm focus:ring-4 transition-all shadow-sm`}><option value="Có mặt">✅ Có mặt</option><option value="Vắng">❌ Vắng</option><option value="Muộn">Muộn</option></select>
                                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"><svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg></div>
                                       </div>
                                     </td>
-                                    <td className="px-6 py-4"><input type="text" placeholder="Ghi chú..." value={item.note} onChange={(e) => handleNoteChange(index, e.target.value)} className="w-full border border-gray-200 rounded px-3 py-2 outline-none focus:border-emerald-500 text-sm bg-transparent" /></td>
+                                    <td className="px-4 py-2.5"><input type="text" placeholder="Ghi chú..." value={item.note} onChange={(e) => handleNoteChange(index, e.target.value)} className="w-full border border-gray-200 rounded px-3 py-1.5 outline-none focus:border-emerald-500 text-sm bg-transparent" /></td>
                                   </tr>
                                 )
                               })
@@ -598,7 +653,7 @@ export default function InstructorDashboard() {
                       </div>
                     </div>
                   ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center py-20 text-gray-400 bg-gray-50/30 m-6 rounded-lg border border-dashed border-gray-300"><span className="text-5xl mb-3">👆</span><p className="font-semibold text-gray-500 text-lg">Vui lòng chọn Lớp học và Buổi học ở trên</p><p className="text-sm">để bắt đầu điểm danh sinh viên.</p></div>
+                    <div className="flex-1 flex flex-col items-center justify-center py-16 text-gray-400 bg-gray-50/30 m-4 rounded-lg border border-dashed border-gray-300"><span className="text-5xl mb-3">👆</span><p className="font-semibold text-gray-500 text-lg">Vui lòng chọn Lớp học và Buổi học ở trên</p><p className="text-sm">để bắt đầu điểm danh sinh viên.</p></div>
                   )}
                 </div>
               )}
@@ -606,49 +661,48 @@ export default function InstructorDashboard() {
               {/* TAB 3: LỊCH SỬ ĐIỂM DANH */}
               {activeTab === 'history' && (
                 <div className="flex flex-col h-full">
-                  <div className="p-6 flex justify-between items-center bg-white border-b border-gray-100">
+                  <div className="p-4 flex justify-between items-center bg-white border-b border-gray-100 shrink-0">
                     <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2"><span className="text-gray-400 text-xl">🕒</span> Lịch sử điểm danh</h2>
                     <div className="flex items-center gap-3">
-                      <button onClick={() => setActiveTab('attendance')} className="px-4 py-2 border border-gray-200 text-gray-600 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">← Quay lại điểm danh</button>
-                      <button className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">📥 Xuất Excel</button>
+                      <button onClick={() => setActiveTab('attendance')} className="px-3 py-2 border border-gray-200 text-gray-600 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">← Điểm danh</button>
+                      <button className="px-3 py-2 bg-white border border-gray-200 text-gray-600 rounded-md text-sm font-semibold hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm">📥 Excel</button>
                     </div>
                   </div>
-                  <div className="p-6 overflow-y-auto">
-                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 mb-6">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Lớp học:</label><select value={historyFilterClass} onChange={(e) => setHistoryFilterClass(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white"><option value="">Tất cả lớp học</option>{myClasses.map(cls => <option key={cls._id} value={cls.name}>{cls.name}</option>)}</select></div>
-                        <div><label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Trạng thái:</label><select value={historyFilterStatus} onChange={(e) => setHistoryFilterStatus(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white"><option value="">Tất cả trạng thái</option><option value="Có mặt">Có mặt</option><option value="Vắng">Vắng</option><option value="Muộn">Muộn</option></select></div>
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Thời gian (Từ - Đến):</label>
+                  <div className="p-4 flex-1 min-h-0 flex flex-col gap-3">
+                    <div className="bg-white p-3 rounded-lg shadow-sm border border-gray-100 shrink-0">
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 items-end">
+                        <div className="lg:col-span-3"><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Lớp học</label><select value={historyFilterClass} onChange={(e) => setHistoryFilterClass(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white"><option value="">Tất cả lớp học</option>{myClasses.map(cls => <option key={cls._id} value={cls.name}>{cls.name}</option>)}</select></div>
+                        <div className="lg:col-span-2"><label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Trạng thái</label><select value={historyFilterStatus} onChange={(e) => setHistoryFilterStatus(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-white"><option value="">Tất cả</option><option value="Có mặt">Có mặt</option><option value="Vắng">Vắng</option><option value="Muộn">Muộn</option></select></div>
+                        <div className="lg:col-span-3">
+                          <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Thời gian</label>
                           <div className="flex items-center gap-2">
                             <input type="date" value={historyStartDate} onChange={(e) => setHistoryStartDate(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" title="Từ ngày" />
-                            <span className="text-gray-400">-</span>
                             <input type="date" value={historyEndDate} onChange={(e) => setHistoryEndDate(e.target.value)} className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white" title="Đến ngày" />
                           </div>
                         </div>
-                      </div>
-                      <div className="flex flex-col md:flex-row items-end justify-between gap-4 border-t border-gray-100 pt-4">
-                        <div className="w-full md:w-1/2">
-                          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Tìm kiếm:</label>
+                        <div className="lg:col-span-3">
+                          <label className="block text-[11px] font-bold text-gray-500 mb-1 uppercase tracking-wide">Tìm kiếm</label>
                           <div className="relative">
                             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><span className="text-gray-400 text-sm">🔍</span></div>
                             <input type="text" placeholder="Tên sinh viên, mã SV..." value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-md text-sm outline-none focus:border-emerald-500 bg-white text-gray-700" />
                           </div>
                         </div>
-                        <button onClick={clearHistoryFilters} className="text-sm font-bold text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors w-fit mb-1"><span className="text-lg leading-none">🗑️</span> Xóa bộ lọc</button>
+                        <button onClick={clearHistoryFilters} className="lg:col-span-1 border border-red-200 text-red-500 hover:bg-red-50 rounded-md h-9 text-xs font-bold transition-colors">Xóa</button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                      <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Tổng điểm danh</span><span className="text-3xl font-extrabold text-emerald-600">{histTotal}</span></div>
-                      <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Có mặt</span><span className="text-3xl font-extrabold text-green-500 flex items-center gap-2"><span className="bg-green-100 rounded px-1 pb-1 text-xl">✅</span> {histPresent}</span></div>
-                      <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Muộn</span><span className="text-3xl font-extrabold text-yellow-500 flex items-center gap-2">🕒 {histLate}</span></div>
-                      <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"><span className="text-sm font-bold text-gray-500 mb-1">Vắng</span><span className="text-3xl font-extrabold text-red-500 flex items-center gap-2">❌ {histAbsent}</span></div>
+
+                    <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 shrink-0">
+                      <div className="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between"><span className="text-xs font-bold text-gray-500">Tổng</span><span className="text-xl font-extrabold text-emerald-600">{histTotal}</span></div>
+                      <div className="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between"><span className="text-xs font-bold text-gray-500">Có mặt</span><span className="text-xl font-extrabold text-green-500">✅ {histPresent}</span></div>
+                      <div className="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between"><span className="text-xs font-bold text-gray-500">Muộn</span><span className="text-xl font-extrabold text-yellow-500">🕒 {histLate}</span></div>
+                      <div className="bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between"><span className="text-xs font-bold text-gray-500">Vắng</span><span className="text-xl font-extrabold text-red-500">❌ {histAbsent}</span></div>
                     </div>
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                      <div className="overflow-x-auto">
+
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1 min-h-0">
+                      <div className="overflow-auto h-full">
                         <table className="w-full text-left text-sm text-gray-700 whitespace-nowrap">
-                          <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs">
-                            <tr><th className="px-6 py-4 font-bold text-center w-16 uppercase tracking-wider">STT</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Sinh viên</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Lớp học</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Ngày học</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Trạng thái</th><th className="px-6 py-4 font-bold uppercase tracking-wider">Ghi chú</th><th className="px-6 py-4 font-bold text-center uppercase tracking-wider">Thời gian điểm danh</th></tr>
+                          <thead className="bg-gray-50 border-b border-gray-200 text-gray-500 text-xs sticky top-0 z-10">
+                            <tr><th className="px-4 py-3 font-bold text-center w-14 uppercase tracking-wider">STT</th><th className="px-4 py-3 font-bold uppercase tracking-wider">Sinh viên</th><th className="px-4 py-3 font-bold uppercase tracking-wider">Lớp học</th><th className="px-4 py-3 font-bold text-center uppercase tracking-wider">Ngày học</th><th className="px-4 py-3 font-bold text-center uppercase tracking-wider">Trạng thái</th><th className="px-4 py-3 font-bold uppercase tracking-wider min-w-[180px]">Ghi chú</th><th className="px-4 py-3 font-bold text-center uppercase tracking-wider">Thời gian</th></tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
                             {filteredHistory.length === 0 ? (
@@ -659,13 +713,13 @@ export default function InstructorDashboard() {
                                 const userInfo = usersData.find(u => u.name === item.studentName);
                                 return (
                                   <tr key={item.id} className="hover:bg-gray-50/50 transition-colors">
-                                    <td className="px-6 py-4 text-center font-medium text-gray-500">{index + 1}</td>
-                                    <td className="px-6 py-4"><div className="font-bold text-gray-800">{item.studentName}</div><div className="text-xs text-gray-400 mt-0.5">{userInfo?.username || "N/A"}</div></td>
-                                    <td className="px-6 py-4"><div className="font-bold text-gray-800">{item.className}</div><div className="text-xs text-gray-400 mt-0.5">{item.subjectName}</div></td>
-                                    <td className="px-6 py-4 text-center font-medium text-gray-600">{item.date}</td>
-                                    <td className="px-6 py-4 text-center"><span className={`inline-block px-3 py-1 rounded text-xs font-bold border ${isPresent ? 'bg-green-50 border-green-100 text-green-500' : isAbsent ? 'bg-red-50 border-red-100 text-red-500' : 'bg-yellow-50 border-yellow-100 text-yellow-600'}`}>{item.status}</span></td>
-                                    <td className="px-6 py-4 text-gray-500">{item.note}</td>
-                                    <td className="px-6 py-4 text-center"><div className="text-gray-700">{item.timestamp.split(' ')[0]}</div><div className="text-xs text-gray-400 mt-0.5">{item.timestamp.split(' ')[1]}</div></td>
+                                    <td className="px-4 py-2.5 text-center font-medium text-gray-500">{index + 1}</td>
+                                    <td className="px-4 py-2.5"><div className="font-bold text-gray-800">{item.studentName}</div><div className="text-xs text-gray-400 mt-0.5">{userInfo?.username || "N/A"}</div></td>
+                                    <td className="px-4 py-2.5"><div className="font-bold text-gray-800">{item.className}</div><div className="text-xs text-gray-400 mt-0.5">{item.subjectName}</div></td>
+                                    <td className="px-4 py-2.5 text-center font-medium text-gray-600">{item.date}</td>
+                                    <td className="px-4 py-2.5 text-center"><span className={`inline-block px-2.5 py-1 rounded text-xs font-bold border ${isPresent ? 'bg-green-50 border-green-100 text-green-500' : isAbsent ? 'bg-red-50 border-red-100 text-red-500' : 'bg-yellow-50 border-yellow-100 text-yellow-600'}`}>{item.status}</span></td>
+                                    <td className="px-4 py-2.5 text-gray-500">{item.note}</td>
+                                    <td className="px-4 py-2.5 text-center"><div className="text-gray-700">{item.timestamp.split(' ')[0]}</div><div className="text-xs text-gray-400 mt-0.5">{item.timestamp.split(' ')[1]}</div></td>
                                   </tr>
                                 )
                               })

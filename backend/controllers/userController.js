@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User'); // Model gốc
 const SalaryHistory = require('../models/SalaryHistory');
 const Attendance = require('../models/Attendance');
+const bcrypt = require('bcryptjs');
 
 // =================================================================
 // 1. HÀM THÊM MỚI NGƯỜI DÙNG THỦ CÔNG (Mật khẩu chữ thường)
@@ -33,7 +34,7 @@ exports.createUser = async (req, res) => {
 };
 
 // =================================================================
-// 2. HÀM NẠP NGƯỜI DÙNG TỪ FILE EXCEL (Mật khẩu chữ thường)
+// 2. HÀM NẠP NGƯỜI DÙNG TỪ FILE EXCEL (hash mật khẩu trước khi lưu)
 // =================================================================
 exports.importUsers = async (req, res) => {
   try {
@@ -43,15 +44,15 @@ exports.importUsers = async (req, res) => {
       return res.status(400).json({ message: 'Danh sách dữ liệu Excel trống!' });
     }
 
-    const preparedUsers = users.map(u => ({
+    const preparedUsers = await Promise.all(users.map(async (u) => ({
       username: u.username || u.email.split('@')[0],
       name: u.name,
       email: u.email,
       phone: u.phone || '',
       major: u.major || '',
       role: u.role || 'student',
-      password: String(u.password || '123456') // Lưu trực tiếp dạng chữ
-    }));
+      password: await bcrypt.hash(String(u.password || '123456'), 10)
+    })));
 
     await User.insertMany(preparedUsers);
     res.status(200).json({ message: `Nạp thành công ${preparedUsers.length} người dùng từ file Excel!` });
@@ -65,35 +66,27 @@ exports.importUsers = async (req, res) => {
 // =================================================================
 exports.updateProfile = async (req, res) => {
   try {
-    const { userId, role, name, oldPassword, newPassword } = req.body;
+    const { userId, name, oldPassword, newPassword } = req.body;
 
-    let UserModel;
-    if (role === 'admin') UserModel = mongoose.models.Admin || mongoose.models.admin || mongoose.models.User || mongoose.models.user;
-    else if (role === 'instructor') UserModel = mongoose.models.Instructor || mongoose.models.instructor || mongoose.models.User || mongoose.models.user;
-    else if (role === 'student') UserModel = mongoose.models.Student || mongoose.models.student || mongoose.models.User || mongoose.models.user;
-
-    if (!UserModel) {
-      try {
-        if (role === 'admin') UserModel = require('../models/Admin');
-        else if (role === 'instructor') UserModel = require('../models/Instructor');
-        else if (role === 'student') UserModel = require('../models/Student');
-      } catch (e) {
-        try { UserModel = require('../models/User'); } catch (err) {}
-      }
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Mã tài khoản không hợp lệ!' });
     }
 
-    if (!UserModel) return res.status(400).json({ message: 'Cấu trúc dữ liệu tài khoản không hợp lệ!' });
-
-    const user = await UserModel.findById(userId);
+    const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: 'Không tìm thấy tài khoản!' });
 
     if (name) user.name = name;
 
-    // Đổi mật khẩu so sánh trực tiếp (không dùng bcrypt)
-    if (oldPassword && newPassword) {
-      if (user.password !== oldPassword) {
+    if (newPassword) {
+      if (!oldPassword) {
+        return res.status(400).json({ message: 'Vui lòng nhập mật khẩu hiện tại!' });
+      }
+
+      const isMatch = await bcrypt.compare(oldPassword, user.password);
+      if (!isMatch) {
         return res.status(400).json({ message: 'Mật khẩu hiện tại không chính xác!' });
       }
+
       user.password = newPassword; 
     }
 
@@ -101,7 +94,7 @@ exports.updateProfile = async (req, res) => {
 
     res.status(200).json({
       message: 'Cập nhật tài khoản thành công!',
-      user: { _id: user._id, username: user.username || user.email, name: user.name, role: user.role }
+      user: { id: user._id, _id: user._id, username: user.username, email: user.email, name: user.name, role: user.role }
     });
 
   } catch (error) {

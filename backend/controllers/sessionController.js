@@ -3,7 +3,7 @@ const Session = require('../models/Session');
 const getSessions = async (req, res) => {
   try {
     // Sắp xếp tăng dần theo thời gian tạo để STT buổi học đi từ 1, 2, 3...
-    const sessions = await Session.find().sort({ createdAt: 1 });
+    const sessions = await Session.find({ source: { $ne: 'qr' } }).sort({ createdAt: 1 });
     res.status(200).json(sessions);
   } catch (error) { res.status(500).json({ error: error.message }); }
 };

@@ -137,6 +137,13 @@ const forgotPassword = async (req, res) => {
         return res.status(404).json({ message: "Email này chưa được đăng ký trong hệ thống!" });
     }
 
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+
+    if (!emailUser || !emailPass) {
+      return res.status(500).json({ message: "Máy chủ chưa cấu hình EMAIL_USER hoặc EMAIL_PASS để gửi OTP." });
+    }
+
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetPasswordToken = otp;
     user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; 
@@ -145,13 +152,13 @@ const forgotPassword = async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'td27790@gmail.com', 
-        pass: 'cucxshpmohypltnp' 
+        user: emailUser,
+        pass: emailPass
       }
     });
 
     const mailOptions = {
-      from: 'Hệ thống LMS E-LEARNING <td27790@gmail.com>', 
+      from: `Hệ thống LMS E-LEARNING <${emailUser}>`,
       to: user.email,
       subject: 'Mã khôi phục mật khẩu - LMS E-LEARNING',
       html: `

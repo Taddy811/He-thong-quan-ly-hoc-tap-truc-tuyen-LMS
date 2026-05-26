@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,15 +14,174 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html.dark,
+html[data-theme="dark"] {
+  --background: #0f172a;
+  --foreground: #e5e7eb;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme,
+.dashboard-theme.dark-theme,
+.dashboard-theme[data-theme="dark"] {
+  background: #0f172a !important;
+  color: #e5e7eb !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-white,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-gray-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-gray-100,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-gray-200,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-emerald-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-teal-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-green-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-red-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-yellow-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-blue-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-cyan-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-pink-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-amber-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .bg-orange-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme [class*="bg-gray-50/"],
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme [class*="bg-white/80"],
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme [class*="bg-white/90"],
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme [class*="bg-[#f4f7f6]"],
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme [class*="bg-[#f8fafc]"],
+.dashboard-theme.dark-theme .bg-white,
+.dashboard-theme.dark-theme .bg-gray-50,
+.dashboard-theme.dark-theme .bg-gray-100,
+.dashboard-theme.dark-theme .bg-gray-200,
+.dashboard-theme.dark-theme [class*="bg-gray-50/"],
+.dashboard-theme.dark-theme [class*="bg-white/80"],
+.dashboard-theme.dark-theme [class*="bg-white/90"],
+.dashboard-theme.dark-theme [class*="bg-[#f4f7f6]"],
+.dashboard-theme.dark-theme [class*="bg-[#f8fafc]"] {
+  background-color: #111827 !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme aside,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme table,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme thead,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme tbody,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme tr,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme td,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme th,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme form,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme input,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme select,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme textarea,
+.dashboard-theme.dark-theme aside,
+.dashboard-theme.dark-theme table,
+.dashboard-theme.dark-theme thead,
+.dashboard-theme.dark-theme tbody,
+.dashboard-theme.dark-theme tr,
+.dashboard-theme.dark-theme td,
+.dashboard-theme.dark-theme th,
+.dashboard-theme.dark-theme form,
+.dashboard-theme.dark-theme input,
+.dashboard-theme.dark-theme select,
+.dashboard-theme.dark-theme textarea {
+  color: #e5e7eb;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme input,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme select,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme textarea,
+.dashboard-theme.dark-theme input,
+.dashboard-theme.dark-theme select,
+.dashboard-theme.dark-theme textarea {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme input::placeholder,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme textarea::placeholder,
+.dashboard-theme.dark-theme input::placeholder,
+.dashboard-theme.dark-theme textarea::placeholder {
+  color: #94a3b8;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .text-gray-900,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .text-gray-800,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .text-gray-700,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme [class*="text-[#1e293b]"],
+.dashboard-theme.dark-theme .text-gray-900,
+.dashboard-theme.dark-theme .text-gray-800,
+.dashboard-theme.dark-theme .text-gray-700,
+.dashboard-theme.dark-theme [class*="text-[#1e293b]"] {
+  color: #f8fafc !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .text-gray-600,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .text-gray-500,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .text-gray-400,
+.dashboard-theme.dark-theme .text-gray-600,
+.dashboard-theme.dark-theme .text-gray-500,
+.dashboard-theme.dark-theme .text-gray-400 {
+  color: #cbd5e1 !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-gray-50,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-gray-100,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-gray-200,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-gray-300,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-white,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-emerald-100,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-green-100,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-red-100,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-yellow-100,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-blue-100,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-pink-100,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-amber-100,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .border-orange-100,
+.dashboard-theme.dark-theme .border,
+.dashboard-theme.dark-theme .border-gray-50,
+.dashboard-theme.dark-theme .border-gray-100,
+.dashboard-theme.dark-theme .border-gray-200,
+.dashboard-theme.dark-theme .border-gray-300,
+.dashboard-theme.dark-theme .border-white {
+  border-color: #334155 !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .divide-amber-200 > :not([hidden]) ~ :not([hidden]),
+.dashboard-theme.dark-theme .divide-gray-100 > :not([hidden]) ~ :not([hidden]),
+.dashboard-theme.dark-theme .divide-amber-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #334155 !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .hover\:bg-gray-50:hover,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .hover\:bg-gray-100:hover,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .hover\:bg-emerald-50:hover,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .hover\:bg-red-50:hover,
+.dashboard-theme.dark-theme .hover\:bg-gray-50:hover,
+.dashboard-theme.dark-theme .hover\:bg-gray-100:hover,
+.dashboard-theme.dark-theme .hover\:bg-emerald-50:hover,
+.dashboard-theme.dark-theme .hover\:bg-red-50:hover {
+  background-color: #1f2937 !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .shadow-sm,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .shadow-md,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .shadow-lg,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .shadow-xl,
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .shadow-2xl,
+.dashboard-theme.dark-theme .shadow-sm,
+.dashboard-theme.dark-theme .shadow-md,
+.dashboard-theme.dark-theme .shadow-lg,
+.dashboard-theme.dark-theme .shadow-xl,
+.dashboard-theme.dark-theme .shadow-2xl {
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28) !important;
+}
+
+:is(html.dark, html[data-theme="dark"], body.dark, body[data-theme="dark"]) .dashboard-theme .theme-toggle,
+.dashboard-theme.dark-theme .theme-toggle {
+  background-color: rgba(15, 23, 42, 0.35) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
 }

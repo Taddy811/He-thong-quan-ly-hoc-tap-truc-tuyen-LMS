@@ -8,6 +8,6 @@ router.post('/start', instructorController.startSession);
 router.get('/qr/:sessionId', instructorController.generateQR);
 router.put('/end/:sessionId', instructorController.endSession);
 router.get('/history/:instructorId', instructorController.getTeachingHistory);
-router.get('/history/:instructorId', userController.getInstructorSalaryHistory);
+router.get('/salary-history/:instructorId', userController.getInstructorSalaryHistory);
 
 module.exports = router;
