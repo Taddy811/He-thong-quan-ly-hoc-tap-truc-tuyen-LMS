@@ -1,93 +1,260 @@
-# 🎓 E-LEARNING LMS - Hệ Thống Quản Lý Học Tập Trực Tuyến
+# E-Learning LMS - Hệ Thống Quản Lý Học Tập
 
-Một hệ thống Quản lý Học tập (Learning Management System) toàn diện được xây dựng theo kiến trúc Fullstack, cung cấp không gian số hiện đại để kết nối và tương tác giữa Quản trị viên, Giảng viên và Sinh viên.
-Thành viên nhóm & Phân công
-*(Cập nhật thông tin các thành viên trong nhóm vào đây để thầy theo dõi)*
-| STT | Họ và Tên | MSSV | Vai trò | Tỉ lệ hoàn thành |
-| 1 | Trần Tiến Đạt | 2380611133 | Nhóm trưởng / Fullstack | 100% |
+Dự án LMS fullstack gồm frontend Next.js và backend Node.js/Express, hỗ trợ quản lý người dùng, chuyên ngành, môn học, lớp học, lịch học và điểm danh bằng QR/manual cho 3 vai trò: Admin, Giảng viên và Sinh viên.
 
-Danh sách các Task cần thực hiện 
+## Mục Lục
 
-### Giai đoạn 1: Khởi tạo & Cấu hình (Tuần 1-2)
-- Lên ý tưởng và viết đặc tả yêu cầu hệ thống.
-- Thiết kế cấu trúc Database (MongoDB Schema cho User, Class, Major, Subject, Session, Attendance).
-- Dựng base code Backend (Node.js/Express) và Frontend (Next.js).
+- [Tính năng chính](#tính-năng-chính)
+- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
+- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
+- [Yêu cầu môi trường](#yêu-cầu-môi-trường)
+- [Cài đặt và chạy dự án](#cài-đặt-và-chạy-dự-án)
+- [Biến môi trường backend](#biến-môi-trường-backend)
+- [Tài khoản và phân quyền](#tài-khoản-và-phân-quyền)
+- [API chính](#api-chính)
+- [Ghi chú phát triển](#ghi-chú-phát-triển)
 
-### Giai đoạn 2: Tính năng Authentication & Phân quyền (Tuần 3-4)
-- API Đăng ký, Đăng nhập (Mã hóa password bằng Bcrypt).
-- Tính năng Quên mật khẩu (Gửi mã OTP qua Email với Nodemailer).
-- Xây dựng UI/UX Login/Register.
-- Routing phân quyền: Điều hướng Admin, Instructor, Student vào đúng Dashboard.
+## Tính Năng Chính
 
-### Giai đoạn 3: Phát triển Module Admin (Tuần 5-6)
-- Chức năng CRUD Quản lý Người dùng (Thêm/Sửa/Xóa/Lọc theo role).
-- Chức năng CRUD Quản lý Chuyên ngành & Môn học.
-- Quản lý Lớp học (Gán giảng viên, xếp lịch học theo thứ, add sinh viên).
-- Xây dựng bộ lọc tìm kiếm đa tiêu chí cho Admin.
+### Admin
 
-### Giai đoạn 4: Phát triển Module Giảng viên & Sinh viên (Tuần 7-8)
-- Thuật toán sinh Lịch học tự động cho Giảng viên dựa trên cấu hình lớp.
-- Tính năng Điểm danh siêu tốc hàng loạt (Bulk Write Database).
-- Thuật toán đồng bộ Lịch học cá nhân cho Sinh viên (Gộp lịch tự động & thủ công).
-- Dashboard thống kê tỷ lệ điểm danh, tiến độ môn học cho Sinh viên bằng Chart/Progress Bar.
+- Quản lý người dùng: thêm, sửa, xóa, lọc theo vai trò và import danh sách bằng file Excel.
+- Quản lý chuyên ngành: thêm, sửa, xóa, mô tả và trạng thái.
+- Quản lý môn học: thêm, sửa, xóa, mô tả và trạng thái.
+- Quản lý lớp học: tạo lớp, gán giảng viên, phòng học, ca học, lịch học, tổng số buổi và danh sách sinh viên.
+- Cập nhật thông tin cá nhân và đổi mật khẩu.
+- Chuyển giao diện sáng/tối trong dashboard.
 
-### Giai đoạn 5: Hoàn thiện & Triển khai (Tuần 9-10)
-- Sửa lỗi (Fix bugs) và tối ưu hóa hiệu năng (Refactor code).
-- Deploy Backend lên server (Render/Vercel).
-- Deploy Frontend lên server (Vercel).
-- Viết báo cáo tổng kết đồ án.
+### Giảng Viên
 
-## 🚀 Tính Năng Nổi Bật
+- Xem lịch giảng dạy được sinh từ cấu hình lớp học và buổi học thủ công.
+- Quản lý lớp phụ trách và danh sách sinh viên.
+- Điểm danh thủ công theo lớp/buổi học.
+- Tạo mã QR điểm danh, kết thúc phiên QR và theo dõi sinh viên đã quét.
+- Thu phóng mã QR để dễ trình chiếu trên màn hình.
+- Xem lịch sử điểm danh và lọc theo lớp, trạng thái, ngày.
+- Quản lý buổi học thủ công.
+- Xem lịch sử lương/thu nhập theo buổi dạy.
+- Cập nhật thông tin cá nhân và đổi mật khẩu.
+- Chuyển giao diện sáng/tối trong dashboard.
 
-Hệ thống được phân quyền chặt chẽ với 3 vai trò riêng biệt:
+### Sinh Viên
 
-### 🛡️ Quản trị viên (Admin)
-- **Quản lý cốt lõi:** Thêm, sửa, xóa (CRUD) danh sách Người dùng, Chuyên ngành, và Môn học.
-- **Quản lý Lớp học nâng cao:** Tạo lớp học, chỉ định Giảng viên, xếp lịch học theo thứ, và thêm Sinh viên vào lớp.
-- **Bộ lọc thông minh:** Tìm kiếm và lọc dữ liệu đa tiêu chí (theo ca học, trạng thái, chuyên ngành,...).
+- Dashboard tổng quan gọn: lớp đang học, lịch hôm nay, lịch sắp tới, tỷ lệ điểm danh và tiến độ lớp.
+- Quét QR điểm danh bằng camera trình duyệt.
+- Xem lớp học của tôi, tiến độ số buổi và lịch sử theo từng lớp.
+- Xem lịch học dạng calendar hoặc danh sách.
+- Xem lịch sử điểm danh và lọc theo lớp, trạng thái, ngày.
+- Cập nhật thông tin cá nhân và đổi mật khẩu.
+- Chuyển giao diện sáng/tối trong dashboard.
 
-### 👨‍🏫 Giảng viên (Instructor)
-- **Lịch giảng dạy:** Tự động sinh lịch dạy dựa trên cấu hình lớp học ban đầu.
-- **Điểm danh siêu tốc:** Hỗ trợ điểm danh hàng loạt (Bulk Attendance) tối ưu hiệu suất cơ sở dữ liệu.
-- **Quản lý lớp học:** Xem danh sách sinh viên và theo dõi tiến độ từng lớp.
+### Xác Thực Và Hệ Thống
 
-### 🎓 Sinh viên (Student)
-- **Lịch học cá nhân:** Tự động gộp và hiển thị lịch học của tất cả các môn đang tham gia dưới dạng Calendar trực quan.
-- **Theo dõi tiến độ:** Xem lịch sử điểm danh chi tiết, cảnh báo tỷ lệ vắng mặt và tiến độ hoàn thành môn học.
+- Đăng ký, đăng nhập và điều hướng theo vai trò.
+- Mã hóa mật khẩu bằng `bcryptjs`.
+- Quên mật khẩu bằng OTP gửi qua email.
+- Frontend gọi API qua rewrites `/api/*` đến backend `http://localhost:5000/api/*`.
 
-### ⚙️ Tính năng chung
-- **Xác thực & Bảo mật:** Đăng nhập, Đăng ký, phân quyền Role-based routing.
-- **Khôi phục mật khẩu:** Tích hợp gửi mã OTP tự động qua Email.
-- **UI/UX Hiện đại:** Giao diện Responsive, hỗ trợ các hiệu ứng Glassmorphism và chuyển động mượt mà.
+## Công Nghệ Sử Dụng
 
-## 🛠️ 4. Công Nghệ Sử Dụng (Tech Stack)
-* **Frontend:** React.js, Next.js (App Router), Tailwind CSS.
-* **Backend:** Node.js, Express.js.
-* **Database:** MongoDB, Mongoose.
-* **Libraries:** `bcryptjs` (Bảo mật), `jsonwebtoken` (Xác thực), `nodemailer` (Gửi Email).
+### Frontend
 
-## 📂 Cấu Trúc Thư Mục (Folder Structure)
+- Next.js 16 App Router
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- `@yudiel/react-qr-scanner` để quét QR
+- `qrcode.react` để hiển thị QR
+- `xlsx` để xử lý import Excel
 
-Dự án được chia thành 2 phần độc lập: `frontend` và `backend`.
+### Backend
+
+- Node.js
+- Express 5
+- MongoDB và Mongoose
+- `bcryptjs`
+- `jsonwebtoken`
+- `nodemailer`
+- `dotenv`
+- `cors`
+
+## Cấu Trúc Thư Mục
 
 ```text
-LMS-PROJECT/
-├── backend/                  # API Server (Node.js/Express)
-│   ├── controllers/          # Logic xử lý nghiệp vụ (Auth, Class, Attendance...)
-│   ├── models/               # Schema Database (Mongoose)
-│   ├── routes/               # Định tuyến API endpoints
-│   ├── .env                  # Biến môi trường Backend
-│   └── server.js             # Entry point của server
+LMS-Project/
+├── backend/
+│   ├── controllers/          # Xử lý nghiệp vụ API
+│   ├── models/               # Mongoose schemas
+│   ├── routes/               # Định tuyến API
+│   ├── server.js             # Entry point Express server
+│   └── package.json
 │
-└── frontend/                 # Giao diện người dùng (Next.js)
-    ├── app/
-    │   ├── dashboard/        # Khu vực yêu cầu đăng nhập
-    │   │   ├── admin/        # Giao diện Admin
-    │   │   ├── instructor/   # Giao diện Giảng viên
-    │   │   └── student/      # Giao diện Sinh viên
-    │   ├── login/            # Trang đăng nhập / Quên mật khẩu
-    │   ├── register/         # Trang đăng ký
-    │   ├── layout.tsx        # Layout tổng
-    │   └── page.tsx          # Landing Page (Trang chủ)
-    ├── public/               # Tài nguyên tĩnh (Hình ảnh, Icon)
-    └── tailwind.config.ts    # Cấu hình Tailwind
+├── frontend/
+│   ├── app/
+│   │   ├── dashboard/
+│   │   │   ├── admin/        # Dashboard Admin
+│   │   │   ├── instructor/   # Dashboard Giảng viên
+│   │   │   └── student/      # Dashboard Sinh viên
+│   │   ├── login/            # Đăng nhập / quên mật khẩu
+│   │   ├── register/         # Đăng ký
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── page.tsx
+│   ├── components/
+│   │   ├── ProfileSettings.tsx
+│   │   └── ThemeToggle.tsx
+│   ├── next.config.ts        # Rewrite /api sang backend
+│   └── package.json
+│
+├── package.json              # Script chạy cả frontend và backend
+└── README.md
+```
+
+## Yêu Cầu Môi Trường
+
+- Node.js 20+ khuyến nghị
+- npm
+- MongoDB local hoặc MongoDB Atlas
+- Tài khoản email SMTP/App Password nếu dùng chức năng quên mật khẩu
+
+## Cài Đặt Và Chạy Dự Án
+
+### 1. Cài dependencies
+
+```bash
+npm install
+cd backend && npm install
+cd ../frontend && npm install
+```
+
+### 2. Tạo file `.env` cho backend
+
+Tạo file `backend/.env` theo mẫu ở phần [Biến môi trường backend](#biến-môi-trường-backend).
+
+### 3. Chạy frontend và backend cùng lúc
+
+Tại thư mục gốc:
+
+```bash
+npm run dev
+```
+
+Mặc định:
+
+- Frontend: `http://localhost:3000`
+- Backend: `http://localhost:5000`
+
+### 4. Chạy riêng từng phần
+
+```bash
+npm run backend
+npm run frontend
+```
+
+Hoặc:
+
+```bash
+cd backend
+npm run dev
+```
+
+```bash
+cd frontend
+npm run dev
+```
+
+### 5. Build frontend
+
+```bash
+cd frontend
+npm run build
+```
+
+## Biến Môi Trường Backend
+
+File: `backend/.env`
+
+```env
+MONGO_URI=mongodb://127.0.0.1:27017/lms-project
+PORT=5000
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password
+QR_SECRET=change_this_qr_secret
+```
+
+Ghi chú:
+
+- `MONGO_URI` bắt buộc để backend kết nối MongoDB.
+- `EMAIL_USER` và `EMAIL_PASS` cần cho chức năng quên mật khẩu/OTP.
+- `QR_SECRET` dùng để ký và xác thực token QR điểm danh. Nếu không khai báo, backend sẽ dùng giá trị mặc định trong code.
+- File `.env` không được commit lên git.
+
+## Tài Khoản Và Phân Quyền
+
+Hệ thống có 3 vai trò:
+
+- `admin`: quản lý người dùng, chuyên ngành, môn học và lớp học.
+- `instructor`: quản lý lớp phụ trách, lịch dạy, điểm danh, QR và lương.
+- `student`: xem lịch học, lớp học, lịch sử điểm danh và quét QR.
+
+Sau khi đăng nhập, frontend tự điều hướng theo `role`:
+
+- `/dashboard/admin`
+- `/dashboard/instructor`
+- `/dashboard/student`
+
+## API Chính
+
+Backend mount các nhóm API sau:
+
+```text
+/api/auth         Đăng ký, đăng nhập, quên mật khẩu, quản lý/import users
+/api/user         Cập nhật hồ sơ, lịch sử lương giảng viên
+/api/majors       CRUD chuyên ngành
+/api/subjects     CRUD môn học
+/api/classes      CRUD lớp học
+/api/sessions     CRUD buổi học thủ công
+/api/attendance   Lưu và đọc lịch sử điểm danh
+/api/instructor   Phiên QR, lịch sử giảng dạy, lịch sử lương
+/api/student      Quét QR điểm danh
+```
+
+Một số endpoint đang dùng:
+
+```text
+POST   /api/auth/register
+POST   /api/auth/login
+POST   /api/auth/forgot-password
+POST   /api/auth/reset-password
+GET    /api/auth/users
+POST   /api/auth/import
+
+GET    /api/classes
+POST   /api/classes
+PUT    /api/classes/:id
+DELETE /api/classes/:id
+
+POST   /api/instructor/start
+GET    /api/instructor/qr/:sessionId
+PUT    /api/instructor/end/:sessionId
+GET    /api/instructor/history/:instructorId
+GET    /api/instructor/salary-history/:instructorId
+
+POST   /api/student/scan-qr
+GET    /api/attendance
+POST   /api/attendance
+```
+
+## Ghi Chú Phát Triển
+
+- Frontend đang gọi API bằng path tương đối `/api/...`; Next.js rewrite sang backend trong `frontend/next.config.ts`.
+- Khi đổi port backend, cần cập nhật lại `destination` trong `frontend/next.config.ts`.
+- QR điểm danh cần camera browser và thường nên chạy trên `localhost` hoặc HTTPS để được phép truy cập camera.
+- Nếu Next.js báo warning về nhiều lockfile, có thể giữ nguyên nếu project vẫn build/chạy được; warning này do có `package-lock.json` ở thư mục gốc và trong `frontend`.
+- Nên chạy `npm run build` trong `frontend` trước khi nộp bài hoặc deploy.
+
+## Thành Viên
+
+| STT | Họ và tên | MSSV | Vai trò | Tỉ lệ hoàn thành |
+| --- | --- | --- | --- | --- |
+| 1 | Trần Tiến Đạt | 2380611133 | Nhóm trưởng / Fullstack | 100% |
