@@ -120,6 +120,12 @@ LMS-Project/
 ## Cài Đặt Và Chạy Dự Án
 
 ### 1. Cài dependencies
+ 
+ Mở terminal chọn dòng Command Prompt (hoặc biểu tượng chữ cmd).
+ (Nếu không muốn chọn dòng Command Prompt thì chạy lệnh mở khóa trực tiếp PowerShell)
+```bash
+ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
 
 ```bash
 npm install
