@@ -1,10 +1,215 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode, type SVGProps } from "react";
 import { useRouter } from "next/navigation";
 import { Scanner } from '@yudiel/react-qr-scanner'; // Thư viện quét QR
 import ProfileSettings from "@/components/ProfileSettings";
 import ThemeToggle from "@/components/ThemeToggle";
+
+type IconProps = SVGProps<SVGSVGElement>;
+type IconComponent = ComponentType<IconProps>;
+
+function AppIcon({ children, className = "h-4 w-4", ...props }: IconProps & { children: ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      focusable="false"
+      {...props}
+    >
+      {children}
+    </svg>
+  );
+}
+
+const HomeIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="m3 10 9-7 9 7" />
+    <path d="M5 10v10h14V10" />
+    <path d="M9 20v-6h6v6" />
+  </AppIcon>
+);
+
+const QrCodeIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <rect x="3" y="3" width="6" height="6" />
+    <rect x="15" y="3" width="6" height="6" />
+    <rect x="3" y="15" width="6" height="6" />
+    <path d="M15 15h2v2h-2z" />
+    <path d="M19 15h2" />
+    <path d="M15 19h2" />
+    <path d="M19 19h2v2h-2z" />
+  </AppIcon>
+);
+
+const BookOpenIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M12 7v14" />
+    <path d="M3 5.5A2.5 2.5 0 0 1 5.5 3H12v18H5.5A2.5 2.5 0 0 1 3 18.5z" />
+    <path d="M21 5.5A2.5 2.5 0 0 0 18.5 3H12v18h6.5A2.5 2.5 0 0 0 21 18.5z" />
+  </AppIcon>
+);
+
+const CalendarIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M8 2v4" />
+    <path d="M16 2v4" />
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M3 10h18" />
+  </AppIcon>
+);
+
+const ClipboardCheckIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M9 5h6" />
+    <path d="M9 3h6v4H9z" />
+    <path d="M5 5h3" />
+    <path d="M16 5h3v16H5V5" />
+    <path d="m8 14 2.5 2.5L16 11" />
+  </AppIcon>
+);
+
+const SettingsIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.04.04a2 2 0 1 1-2.83 2.83l-.04-.04A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6V20a2 2 0 1 1-4 0v-.06a1.7 1.7 0 0 0-1-.6 1.7 1.7 0 0 0-1.88.34l-.04.04a2 2 0 1 1-2.83-2.83l.04-.04A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1H4a2 2 0 1 1 0-4h.06a1.7 1.7 0 0 0 .6-1 1.7 1.7 0 0 0-.34-1.88l-.04-.04a2 2 0 1 1 2.83-2.83l.04.04A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6V4a2 2 0 1 1 4 0v.06a1.7 1.7 0 0 0 1 .6 1.7 1.7 0 0 0 1.88-.34l.04-.04a2 2 0 1 1 2.83 2.83l-.04.04A1.7 1.7 0 0 0 19.4 9c.22.36.43.7.6 1H20a2 2 0 1 1 0 4h-.06c-.17.3-.38.64-.54 1Z" />
+  </AppIcon>
+);
+
+const CheckCircleIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m8 12 2.5 2.5L16 9" />
+  </AppIcon>
+);
+
+const XCircleIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m9 9 6 6" />
+    <path d="m15 9-6 6" />
+  </AppIcon>
+);
+
+const PercentIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M19 5 5 19" />
+    <circle cx="7" cy="7" r="2" />
+    <circle cx="17" cy="17" r="2" />
+  </AppIcon>
+);
+
+const LogOutIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M10 17H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h5" />
+    <path d="m16 7 5 5-5 5" />
+    <path d="M21 12H9" />
+  </AppIcon>
+);
+
+const CameraIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M14.5 4 16 7h3a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h3l1.5-3z" />
+    <circle cx="12" cy="13" r="3.5" />
+  </AppIcon>
+);
+
+const LightbulbIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M9 18h6" />
+    <path d="M10 22h4" />
+    <path d="M8.5 14.5A6 6 0 1 1 15.5 14c-.7.58-1.1 1.4-1.2 2.3H9.7c-.1-.72-.46-1.32-1.2-1.8Z" />
+  </AppIcon>
+);
+
+const SchoolIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="m3 10 9-5 9 5-9 5z" />
+    <path d="M6 12v5c0 1.1 2.7 2 6 2s6-.9 6-2v-5" />
+    <path d="M21 10v6" />
+  </AppIcon>
+);
+
+const SearchIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </AppIcon>
+);
+
+const UserIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4 21a8 8 0 0 1 16 0" />
+  </AppIcon>
+);
+
+const ListIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M8 6h13" />
+    <path d="M8 12h13" />
+    <path d="M8 18h13" />
+    <path d="M3 6h.01" />
+    <path d="M3 12h.01" />
+    <path d="M3 18h.01" />
+  </AppIcon>
+);
+
+const ArrowRightIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M5 12h14" />
+    <path d="m13 6 6 6-6 6" />
+  </AppIcon>
+);
+
+const ArrowLeftIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M19 12H5" />
+    <path d="m11 6-6 6 6 6" />
+  </AppIcon>
+);
+
+const ChevronLeftIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="m15 18-6-6 6-6" />
+  </AppIcon>
+);
+
+const ChevronRightIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="m9 18 6-6-6-6" />
+  </AppIcon>
+);
+
+const ClockIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </AppIcon>
+);
+
+const MapPinIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11Z" />
+    <circle cx="12" cy="10" r="2.5" />
+  </AppIcon>
+);
+
+const TrophyIcon = (props: IconProps) => (
+  <AppIcon {...props}>
+    <path d="M8 21h8" />
+    <path d="M12 17v4" />
+    <path d="M7 4h10v4a5 5 0 0 1-10 0z" />
+    <path d="M17 6h3a2 2 0 0 1-2 4h-1" />
+    <path d="M7 6H4a2 2 0 0 0 2 4h1" />
+  </AppIcon>
+);
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -41,23 +246,6 @@ export default function StudentDashboard() {
   const [historyFilterStatus, setHistoryFilterStatus] = useState("");
   const [historyFilterStartDate, setHistoryFilterStartDate] = useState("");
   const [historyFilterEndDate, setHistoryFilterEndDate] = useState("");
-
-  useEffect(() => {
-    const userData = localStorage.getItem("user");
-    if (!userData) {
-      router.push("/login");
-    } else {
-      const parsedUser = JSON.parse(userData);
-      if (parsedUser.role !== 'student') {
-        router.push(`/dashboard/${parsedUser.role}`);
-        return;
-      }
-      setUser(parsedUser);
-      fetchMyClasses(parsedUser.name, parsedUser.username);
-      fetchAttendanceHistory(parsedUser.name, parsedUser.username);
-      fetchSessions();
-    }
-  }, []);
 
   const fetchMyClasses = async (studentName: string, studentUsername: string) => {
     try {
@@ -101,6 +289,25 @@ export default function StudentDashboard() {
     }
   };
 
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (!userData) {
+      router.push("/login");
+    } else {
+      const parsedUser = JSON.parse(userData);
+      if (parsedUser.role !== 'student') {
+        router.push(`/dashboard/${parsedUser.role}`);
+        return;
+      }
+      // localStorage is only available after hydration, so the user state is restored here.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setUser(parsedUser);
+      fetchMyClasses(parsedUser.name, parsedUser.username);
+      fetchAttendanceHistory(parsedUser.name, parsedUser.username);
+      fetchSessions();
+    }
+  }, [router]);
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     router.push("/login");
@@ -125,7 +332,7 @@ export default function StudentDashboard() {
         setMessage(data.message);
       }
       setTimeout(() => { setScanStatus('idle'); setMessage(''); }, 3000);
-    } catch (error) {
+    } catch {
       setScanStatus('error');
       setMessage("Lỗi kết nối đến máy chủ!");
       setTimeout(() => setScanStatus('idle'), 3000);
@@ -145,9 +352,9 @@ export default function StudentDashboard() {
     let allSessions: any[] = [];
     
     myClasses.forEach(cls => {
-      let autoSessions: any[] = [];
+      const autoSessions: any[] = [];
       if (cls.startDate && cls.totalSessions && cls.scheduleDays && cls.scheduleDays.length > 0) {
-        let currentDate = new Date(cls.startDate);
+        const currentDate = new Date(cls.startDate);
         const targetDays = cls.scheduleDays.map((d: string) => dayMap[d]);
         const total = Number(cls.totalSessions) || 0;
         let count = 0; let maxIter = 365;
@@ -177,7 +384,7 @@ export default function StudentDashboard() {
       }
 
       const manualSessions = sessionsData.filter(s => s.classId === cls._id);
-      let mergedSessions = [...autoSessions];
+      const mergedSessions = [...autoSessions];
       manualSessions.forEach(ms => {
         const idx = mergedSessions.findIndex(s => s.date === ms.date);
         const [d, m, y] = ms.date.split('/');
@@ -224,7 +431,6 @@ export default function StudentDashboard() {
   
   const daysInCurrentMonth = getDaysInMonth(currentMonth, currentYear);
   const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
-  const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
   const dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
   
   const handlePrevMonth = () => { if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(currentYear - 1); } else setCurrentMonth(currentMonth - 1); };
@@ -254,7 +460,7 @@ export default function StudentDashboard() {
 
   // ================= LOGIC LỊCH HỌC (TAB 3) =================
   const filteredScheduleSessions = mySchedule.filter(s => {
-    let matchSub = scheduleSubject === "" || s.subject === scheduleSubject;
+    const matchSub = scheduleSubject === "" || s.subject === scheduleSubject;
     let matchDate = true;
     if (scheduleStartDate && scheduleEndDate) {
       const sessDate = s.dateObj.getTime();
@@ -299,20 +505,20 @@ export default function StudentDashboard() {
     activeTab === 'history' ? 'Lịch sử điểm danh' :
     'Thông tin cá nhân';
 
-  const studentNavItems = [
-    { id: 'dashboard', label: 'Tổng quan', icon: '⌂', action: () => setActiveTab('dashboard') },
-    { id: 'qr-scan', label: 'Quét QR', icon: '▣', action: () => setActiveTab('qr-scan') },
-    { id: 'myclasses', label: 'Lớp học', icon: '▤', action: () => setActiveTab('myclasses') },
-    { id: 'schedule', label: 'Lịch học', icon: '□', action: () => setActiveTab('schedule') },
-    { id: 'history', label: 'Điểm danh', icon: '◷', action: () => { setActiveTab('history'); setHistoryFilterClassName(null); } },
-    { id: 'profile', label: 'Cá nhân', icon: '⚙', action: () => setActiveTab('profile') },
+  const studentNavItems: { id: string; label: string; icon: IconComponent; action: () => void }[] = [
+    { id: 'dashboard', label: 'Tổng quan', icon: HomeIcon, action: () => setActiveTab('dashboard') },
+    { id: 'qr-scan', label: 'Quét QR', icon: QrCodeIcon, action: () => setActiveTab('qr-scan') },
+    { id: 'myclasses', label: 'Lớp học', icon: BookOpenIcon, action: () => setActiveTab('myclasses') },
+    { id: 'schedule', label: 'Lịch học', icon: CalendarIcon, action: () => setActiveTab('schedule') },
+    { id: 'history', label: 'Điểm danh', icon: ClipboardCheckIcon, action: () => { setActiveTab('history'); setHistoryFilterClassName(null); } },
+    { id: 'profile', label: 'Cá nhân', icon: SettingsIcon, action: () => setActiveTab('profile') },
   ];
 
-  const dashboardStats = [
-    { label: 'Lớp đang học', value: totalClassesEnrolled, detail: 'Đã ghi danh', icon: '📚', color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
-    { label: 'Hôm nay', value: totalClassesToday, detail: `${currentDayName}, ${todayStr}`, icon: '📅', color: 'text-sky-700 bg-blue-50 border-blue-100' },
-    { label: 'Đã có mặt', value: totalAttended, detail: `${totalHistoryCount} lần điểm danh`, icon: '✓', color: 'text-green-700 bg-green-50 border-green-100' },
-    { label: 'Tỷ lệ tham gia', value: `${attendanceRate}%`, detail: 'Theo lịch sử điểm danh', icon: '%', color: 'text-amber-700 bg-amber-50 border-amber-100' },
+  const dashboardStats: { label: string; value: string | number; detail: string; icon: IconComponent; color: string }[] = [
+    { label: 'Lớp đang học', value: totalClassesEnrolled, detail: 'Đã ghi danh', icon: BookOpenIcon, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
+    { label: 'Hôm nay', value: totalClassesToday, detail: `${currentDayName}, ${todayStr}`, icon: CalendarIcon, color: 'text-sky-700 bg-blue-50 border-blue-100' },
+    { label: 'Đã có mặt', value: totalAttended, detail: `${totalHistoryCount} lần điểm danh`, icon: CheckCircleIcon, color: 'text-green-700 bg-green-50 border-green-100' },
+    { label: 'Tỷ lệ tham gia', value: `${attendanceRate}%`, detail: 'Theo lịch sử điểm danh', icon: PercentIcon, color: 'text-amber-700 bg-amber-50 border-amber-100' },
   ];
 
   if (!user) return <div className="p-10 text-center">Đang tải dữ liệu sinh viên...</div>;
@@ -329,24 +535,31 @@ export default function StudentDashboard() {
           </div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1">
-          {studentNavItems.map(item => (
-            <button
-              key={item.id}
-              onClick={item.action}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-bold transition-all border-l-4 ${
-                activeTab === item.id
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-600 shadow-sm'
-                  : 'text-gray-600 border-transparent hover:bg-gray-50'
-              }`}
-            >
-              <span className="w-6 h-6 rounded bg-gray-100 flex items-center justify-center text-[12px] shrink-0">{item.icon}</span>
-              <span className="truncate">{item.label}</span>
-            </button>
-          ))}
+          {studentNavItems.map(item => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={item.action}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-bold transition-all border-l-4 ${
+                  activeTab === item.id
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-600 shadow-sm'
+                    : 'text-gray-600 border-transparent hover:bg-gray-50'
+                }`}
+              >
+                <span className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition-colors ${
+                  activeTab === item.id ? 'bg-white text-emerald-700 shadow-sm' : 'bg-gray-100 text-gray-500'
+                }`}>
+                  <Icon className="h-4 w-4" />
+                </span>
+                <span className="truncate">{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
         <div className="p-3 border-t border-gray-100">
           <button onClick={handleLogout} className="flex items-center gap-2 text-gray-600 hover:text-red-500 font-bold px-3 py-2 text-sm w-full rounded-md hover:bg-red-50 transition-colors">
-            <span>↗</span> Đăng xuất
+            <LogOutIcon className="h-4 w-4" /> Đăng xuất
           </button>
         </div>
       </aside>
@@ -381,7 +594,7 @@ export default function StudentDashboard() {
             <div className="max-w-2xl mx-auto mt-10">
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="p-6 bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-center">
-                  <h2 className="text-2xl font-black mb-2 flex items-center justify-center gap-2"><span>📷</span> Quét mã QR</h2>
+                  <h2 className="text-2xl font-black mb-2 flex items-center justify-center gap-2"><CameraIcon className="h-6 w-6" /> Quét mã QR</h2>
                   <p className="text-emerald-100 text-sm">Đưa mã QR trên màn hình của Giảng viên vào khung hình bên dưới để tự động điểm danh.</p>
                 </div>
                 
@@ -400,14 +613,16 @@ export default function StudentDashboard() {
                     {/* Lớp phủ báo trạng thái thành công/thất bại */}
                     {scanStatus !== 'idle' && (
                       <div className={`absolute inset-0 z-10 flex flex-col items-center justify-center text-white font-bold p-6 text-center ${scanStatus === 'success' ? 'bg-green-500/95' : 'bg-red-500/95'}`}>
-                        <div className="text-6xl mb-4">{scanStatus === 'success' ? '✅' : '❌'}</div>
+                        <div className="mb-4">
+                          {scanStatus === 'success' ? <CheckCircleIcon className="h-14 w-14" /> : <XCircleIcon className="h-14 w-14" />}
+                        </div>
                         <p className="text-lg">{message}</p>
                       </div>
                     )}
                   </div>
                   
                   <div className="mt-8 text-center text-sm text-gray-500 font-medium bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <p className="mb-1">💡 Đảm bảo bạn cho phép trình duyệt truy cập <strong>Camera</strong>.</p>
+                    <p className="mb-1 flex items-center justify-center gap-2"><LightbulbIcon className="h-4 w-4 text-amber-500" /> Đảm bảo bạn cho phép trình duyệt truy cập <strong>Camera</strong>.</p>
                     <p className="text-red-500">Mã QR của giảng viên sẽ thay đổi 60 giây một lần để chống gian lận.</p>
                   </div>
                 </div>
@@ -425,24 +640,29 @@ export default function StudentDashboard() {
                   <p className="text-sm text-gray-500 font-medium mt-1">Tổng quan nhanh lịch học, điểm danh và các lớp đang theo học.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => setActiveTab('qr-scan')} className="px-4 py-2 rounded-md bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors">Quét QR</button>
-                  <button onClick={() => setActiveTab('schedule')} className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 transition-colors">Xem lịch</button>
+                  <button onClick={() => setActiveTab('qr-scan')} className="px-4 py-2 rounded-md bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-colors flex items-center gap-2"><QrCodeIcon className="h-4 w-4" />Quét QR</button>
+                  <button onClick={() => setActiveTab('schedule')} className="px-4 py-2 rounded-md bg-gray-900 text-white text-sm font-bold hover:bg-gray-800 transition-colors flex items-center gap-2"><CalendarIcon className="h-4 w-4" />Xem lịch</button>
                 </div>
               </section>
 
               <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-                {dashboardStats.map(stat => (
-                  <div key={stat.label} className={`bg-white rounded-xl border shadow-sm p-4 ${stat.color}`}>
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-xs font-bold uppercase tracking-wide opacity-80">{stat.label}</div>
-                        <div className="text-2xl font-extrabold text-gray-900 mt-1">{stat.value}</div>
+                {dashboardStats.map(stat => {
+                  const Icon = stat.icon;
+                  return (
+                    <div key={stat.label} className={`bg-white rounded-xl border shadow-sm p-4 ${stat.color}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-xs font-bold uppercase tracking-wide opacity-80">{stat.label}</div>
+                          <div className="text-2xl font-extrabold text-gray-900 mt-1">{stat.value}</div>
+                        </div>
+                        <div className="w-10 h-10 rounded-lg bg-white/85 border border-white flex items-center justify-center shadow-sm shrink-0">
+                          <Icon className="h-5 w-5" />
+                        </div>
                       </div>
-                      <div className="w-9 h-9 rounded-lg bg-white/80 border border-white flex items-center justify-center text-sm font-black">{stat.icon}</div>
+                      <div className="text-xs font-semibold text-gray-500 mt-3 truncate">{stat.detail}</div>
                     </div>
-                    <div className="text-xs font-semibold text-gray-500 mt-3 truncate">{stat.detail}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </section>
 
               <section className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-4 items-start">
@@ -564,12 +784,12 @@ export default function StudentDashboard() {
           {activeTab === 'myclasses' && (
             <div className="max-w-7xl mx-auto space-y-4">
               <div className="bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-t-xl p-4 flex justify-between items-center shadow-md">
-                <h2 className="text-lg font-bold flex items-center gap-2"><span>🏫</span> Lớp học của tôi</h2>
+                <h2 className="text-lg font-bold flex items-center gap-2"><SchoolIcon className="h-5 w-5" /> Lớp học của tôi</h2>
               </div>
 
               <div className="bg-white p-4 rounded-b-xl shadow-sm border border-gray-200">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
-                  <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">🔍</span><input type="text" placeholder="Tìm kiếm lớp học, giảng viên..." value={mcSearch} onChange={e => setMcSearch(e.target.value)} className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-emerald-500 bg-white"/></div>
+                  <div className="relative"><SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /><input type="text" placeholder="Tìm kiếm lớp học, giảng viên..." value={mcSearch} onChange={e => setMcSearch(e.target.value)} className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md text-sm outline-none focus:border-emerald-500 bg-white"/></div>
                   <select value={mcShift} onChange={e => setMcShift(e.target.value)} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white"><option value="">Tất cả ca học</option><option value="Ca 1">Ca 1</option><option value="Ca 2">Ca 2</option><option value="Ca 3">Ca 3</option><option value="Ca 4">Ca 4</option><option value="Ca 5">Ca 5</option><option value="Ca 6">Ca 6</option></select>
                   <select value={mcSubject} onChange={e => setMcSubject(e.target.value)} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-600 bg-white"><option value="">Tất cả môn học</option>{uniqueSubjectsMyClasses.map(sub => <option key={sub} value={sub}>{sub}</option>)}</select>
                   <button onClick={clearMcFilters} className="text-sm font-bold text-red-500 hover:text-red-700 h-fit py-2">Xóa bộ lọc</button>
@@ -592,9 +812,9 @@ export default function StudentDashboard() {
                               <td className="px-4 py-3 text-center font-medium text-gray-500">{index + 1}</td>
                               <td className="px-4 py-3"><div className="font-extrabold text-gray-900 text-sm">{cls.name}</div><div className="text-xs text-gray-500 mt-0.5">{cls.subject}</div></td>
                               <td className="px-4 py-3 font-medium text-pink-700"><span className="bg-pink-50 border border-pink-100 px-2.5 py-1 rounded text-xs font-semibold">{cls.room || 'N/A'}</span></td>
-                              <td className="px-4 py-3 font-medium text-gray-800 flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">👤</div><span>{cls.instructor}</span></td>
+                              <td className="px-4 py-3 font-medium text-gray-800 flex items-center gap-2"><div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 shrink-0"><UserIcon className="h-4 w-4" /></div><span>{cls.instructor}</span></td>
                               <td className="px-4 py-3 text-center font-bold text-orange-600"><span className="bg-orange-50 border border-orange-100 px-2 py-0.5 rounded text-xs uppercase">{cls.shift ? cls.shift.split(' (')[0] : 'N/A'}</span></td>
-                              <td className="px-4 py-3 font-medium text-emerald-600">📅 {cls.scheduleDays?.join(', ') || 'N/A'}</td>
+                              <td className="px-4 py-3 font-medium text-emerald-600"><span className="inline-flex items-center gap-1.5"><CalendarIcon className="h-4 w-4" /> {cls.scheduleDays?.join(', ') || 'N/A'}</span></td>
                               <td className="px-4 py-3">
                                 <div className="flex items-center justify-between text-xs font-bold text-gray-600 mb-1.5"><span>{percentage.toFixed(0)}%</span><span>{progress.attended}/{progress.total} buổi</span></div>
                                 <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden"><div className={`h-1.5 rounded-full transition-all ${percentage >= 100 ? 'bg-green-500' : 'bg-emerald-600'}`} style={{ width: `${percentage}%` }}></div></div>
@@ -619,10 +839,10 @@ export default function StudentDashboard() {
           {activeTab === 'schedule' && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full relative">
                <div className="p-4 bg-gradient-to-r from-emerald-600 to-teal-500 text-white rounded-t-xl flex justify-between items-center shadow-md shrink-0">
-                  <h2 className="text-lg font-bold flex items-center gap-2"><span className="text-xl">📅</span> Lịch học</h2>
+                  <h2 className="text-lg font-bold flex items-center gap-2"><CalendarIcon className="h-5 w-5" /> Lịch học</h2>
                   <div className="flex bg-white/20 p-1 rounded-lg">
-                      <button onClick={() => setScheduleViewMode('calendar')} className={`px-4 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors ${scheduleViewMode === 'calendar' ? 'bg-white text-emerald-600' : 'text-white hover:bg-white/10'}`}>📅 Lịch</button>
-                      <button onClick={() => setScheduleViewMode('list')} className={`px-4 py-1.5 rounded-md text-xs font-bold transition-colors ${scheduleViewMode === 'list' ? 'bg-white text-emerald-600' : 'text-white hover:bg-white/10'}`}>🗂️ Danh sách</button>
+                      <button onClick={() => setScheduleViewMode('calendar')} className={`px-4 py-1.5 rounded-md text-xs font-bold shadow-sm transition-colors flex items-center gap-1.5 ${scheduleViewMode === 'calendar' ? 'bg-white text-emerald-600' : 'text-white hover:bg-white/10'}`}><CalendarIcon className="h-3.5 w-3.5" /> Lịch</button>
+                      <button onClick={() => setScheduleViewMode('list')} className={`px-4 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5 ${scheduleViewMode === 'list' ? 'bg-white text-emerald-600' : 'text-white hover:bg-white/10'}`}><ListIcon className="h-3.5 w-3.5" /> Danh sách</button>
                   </div>
               </div>
 
@@ -631,7 +851,7 @@ export default function StudentDashboard() {
                     <span className="text-sm font-bold text-gray-700">Bộ lọc:</span>
                     <div className="flex items-center gap-2 bg-gray-50 rounded-md border border-gray-200">
                       <input type="date" value={scheduleStartDate} onChange={(e) => setScheduleStartDate(e.target.value)} className="bg-transparent px-2 py-2 text-sm outline-none text-gray-600"/>
-                      <span className="text-gray-400">→</span>
+                      <ArrowRightIcon className="h-4 w-4 text-gray-400" />
                       <input type="date" value={scheduleEndDate} onChange={(e) => setScheduleEndDate(e.target.value)} className="bg-transparent px-2 py-2 text-sm outline-none text-gray-600"/>
                     </div>
                     <select value={scheduleSubject} onChange={(e) => setScheduleSubject(e.target.value)} className="border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:border-emerald-500 text-gray-700 bg-gray-50 min-w-[200px]">
@@ -648,9 +868,9 @@ export default function StudentDashboard() {
                     <div className="bg-emerald-600 p-3 flex justify-between items-center text-white">
                       <div className="font-bold text-lg ml-2">tháng {currentMonth + 1} {currentYear}</div>
                       <div className="flex items-center gap-1 bg-white/20 rounded-lg p-1">
-                        <button onClick={handlePrevMonth} className="px-3 py-1.5 hover:bg-white/10 rounded font-bold transition-colors">&lt;</button>
+                        <button onClick={handlePrevMonth} className="px-3 py-1.5 hover:bg-white/10 rounded font-bold transition-colors" aria-label="Tháng trước"><ChevronLeftIcon className="h-4 w-4" /></button>
                         <button onClick={handleToday} className="px-4 py-1.5 text-sm font-bold bg-white text-emerald-600 rounded hover:bg-gray-100 transition-colors">Hôm nay</button>
-                        <button onClick={handleNextMonth} className="px-3 py-1.5 hover:bg-white/10 rounded font-bold transition-colors">&gt;</button>
+                        <button onClick={handleNextMonth} className="px-3 py-1.5 hover:bg-white/10 rounded font-bold transition-colors" aria-label="Tháng sau"><ChevronRightIcon className="h-4 w-4" /></button>
                       </div>
                     </div>
 
@@ -720,16 +940,16 @@ export default function StudentDashboard() {
                               <td className="px-4 py-3">
                                 <div className="flex items-center gap-1.5 mb-1">
                                   <span className="bg-orange-50 text-orange-600 border border-orange-100 px-2.5 py-1 rounded text-xs font-semibold">{sess.shift ? sess.shift.split(' (')[0] : 'N/A'}</span>
-                                  🕒 {sess.shift ? sess.shift.match(/\((.*?)\)/)?.[1] : ''}
+                                  <span className="inline-flex items-center gap-1 text-gray-500"><ClockIcon className="h-3.5 w-3.5" /> {sess.shift ? sess.shift.match(/\((.*?)\)/)?.[1] : ''}</span>
                                 </div>
-                                <div className="text-xs font-bold text-pink-700 bg-pink-50 w-fit px-2.5 py-1 rounded border border-pink-100">📍 {sess.room || 'N/A'}</div>
+                                <div className="text-xs font-bold text-pink-700 bg-pink-50 w-fit px-2.5 py-1 rounded border border-pink-100 inline-flex items-center gap-1.5"><MapPinIcon className="h-3.5 w-3.5" /> {sess.room || 'N/A'}</div>
                               </td>
                               <td className="px-4 py-3">
                                 <div className="font-extrabold text-gray-900 text-sm">{sess.className}</div>
-                                <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">📘 {sess.subject}</div>
+                                <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><BookOpenIcon className="h-3.5 w-3.5" /> {sess.subject}</div>
                               </td>
                               <td className="px-4 py-3 font-medium text-gray-800 flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">👤</div>
+                                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 shrink-0"><UserIcon className="h-4 w-4" /></div>
                                 <span>{sess.instructor}</span>
                               </td>
                             </tr>
@@ -752,14 +972,14 @@ export default function StudentDashboard() {
                   <div className="flex items-center gap-3">
                     {historyFilterClassName && (
                       <button onClick={() => setHistoryFilterClassName(null)} className="text-white hover:text-white/80 text-sm font-bold pr-1 flex items-center gap-1 transition-colors">
-                        ← Quay lại danh sách lớp
+                        <ArrowLeftIcon className="h-4 w-4" /> Quay lại danh sách lớp
                       </button>
                     )}
                   </div>
                 </div>
                 <div>
                   <h2 className="text-lg font-bold flex items-center gap-2 mb-1">
-                    <span className="text-xl">🗓️</span> Lịch sử điểm danh {historyFilterClassName ? `- ${historyFilterClassName}` : ''}
+                    <ClipboardCheckIcon className="h-5 w-5" /> Lịch sử điểm danh {historyFilterClassName ? `- ${historyFilterClassName}` : ''}
                   </h2>
                   {historyFilterClassName && historyFilteredClassData ? (
                     <p className="text-sm text-white/80 font-medium">Môn học: {historyFilteredClassData.subject} | Giảng viên: {historyFilteredClassData.instructor}</p>
@@ -775,35 +995,35 @@ export default function StudentDashboard() {
                   <div className="bg-white rounded-xl border border-gray-100 p-3 flex flex-col justify-center shadow-sm">
                     <div className="text-gray-500 font-semibold text-xs mb-1">Tổng buổi học</div>
                     <div className="text-emerald-600 font-extrabold text-2xl flex items-center gap-2">
-                      <span className="text-emerald-500 text-2xl"></span> {hTotalSessions}
+                      <CalendarIcon className="h-5 w-5 text-emerald-500" /> {hTotalSessions}
                     </div>
                   </div>
                   
                   <div className="bg-white rounded-xl border border-gray-100 p-3 flex flex-col justify-center shadow-sm">
                     <div className="text-gray-500 font-semibold text-xs mb-1">Có mặt</div>
                     <div className="text-green-500 font-extrabold text-2xl flex items-center gap-2 mb-1">
-                      <span className="text-green-500 text-2xl">✅</span> {hOnTime}
+                      <CheckCircleIcon className="h-5 w-5 text-green-500" /> {hOnTime}
                     </div>
                   </div>
 
                   <div className="bg-white rounded-xl border border-gray-100 p-3 flex flex-col justify-center shadow-sm">
                     <div className="text-gray-500 font-semibold text-xs mb-1">Đi muộn</div>
                     <div className="text-yellow-500 font-extrabold text-2xl flex items-center gap-2 mb-1">
-                      <span className="text-yellow-500 text-2xl">🕒</span> {hLate}
+                      <ClockIcon className="h-5 w-5 text-yellow-500" /> {hLate}
                     </div>
                   </div>
                   
                   <div className="bg-white rounded-xl border border-gray-100 p-3 flex flex-col justify-center shadow-sm">
                     <div className="text-gray-500 font-semibold text-xs mb-1">Vắng mặt</div>
                     <div className="text-red-500 font-extrabold text-2xl flex items-center gap-2">
-                      <span className="text-red-500 text-2xl">❌</span> {hAbsent}
+                      <XCircleIcon className="h-5 w-5 text-red-500" /> {hAbsent}
                     </div>
                   </div>
                   
                   <div className="bg-white rounded-xl border border-gray-100 p-3 flex flex-col justify-center shadow-sm relative overflow-hidden">
                     <div className="text-gray-500 font-semibold text-xs mb-1">Tỷ lệ tham gia</div>
                     <div className="text-green-500 font-extrabold text-2xl flex items-center gap-2 mb-2">
-                      <span className="text-green-500 text-2xl">🏆</span> {hRate}%
+                      <TrophyIcon className="h-5 w-5 text-green-500" /> {hRate}%
                     </div>
                     <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden mb-1.5">
                       <div className="bg-green-500 h-full rounded-full transition-all" style={{ width: `${hRate}%` }}></div>
@@ -868,15 +1088,16 @@ export default function StudentDashboard() {
                               </td>
                               <td className="px-4 py-3">
                                  <div className="font-bold text-emerald-600">{item.className}</div>
-                                 <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">📘 {item.subjectName}</div>
+                                 <div className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><BookOpenIcon className="h-3.5 w-3.5" /> {item.subjectName}</div>
                               </td>
                               <td className="px-4 py-3 font-medium text-gray-800 flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xs font-bold">👤</div>
+                                <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 shrink-0"><UserIcon className="h-4 w-4" /></div>
                                 <span>{item.instructor || myClasses.find(c => c.name === item.className)?.instructor || "Giảng viên"}</span>
                               </td>
                               <td className="px-4 py-3 text-center">
-                                <span className={`inline-block px-3 py-1 rounded text-xs font-bold shadow-sm border ${isPresent ? 'bg-green-50 text-green-600 border-green-100' : isAbsent ? 'bg-red-50 text-red-600 border-red-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>
-                                  {isPresent ? '✅ Có mặt' : isAbsent ? '❌ Vắng' : '🕒 Muộn'}
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded text-xs font-bold shadow-sm border ${isPresent ? 'bg-green-50 text-green-600 border-green-100' : isAbsent ? 'bg-red-50 text-red-600 border-red-100' : 'bg-yellow-50 text-yellow-700 border-yellow-100'}`}>
+                                  {isPresent ? <CheckCircleIcon className="h-3.5 w-3.5" /> : isAbsent ? <XCircleIcon className="h-3.5 w-3.5" /> : <ClockIcon className="h-3.5 w-3.5" />}
+                                  {isPresent ? 'Có mặt' : isAbsent ? 'Vắng' : 'Muộn'}
                                 </span>
                               </td>
                               <td className="px-4 py-3 text-gray-500 italic text-xs font-medium">{item.note || '-'}</td>

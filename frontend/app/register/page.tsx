@@ -10,7 +10,7 @@ export default function RegisterPage() {
     phone: "",
     password: "",
     confirmPassword: "",
-    role: "" 
+    role: "admin"
   });
   const [message, setMessage] = useState("");
 
