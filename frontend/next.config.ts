@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
       {
         // Tự động chuyển mọi lệnh gọi /api/ xuống cổng 5000 của Backend
         source: '/api/:path*', 
-        destination: 'http://localhost:5000/api/:path*', 
+        destination: 'https://lms-backend-3wye.onrender.com/api/:path*', 
       },
     ]
   },
