@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { apiFetch, isTimeoutError, readApiResponse } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,21 +26,25 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await apiFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ loginId: identifier, password }),
       });
 
-      const data = await res.json();
+      const data = await readApiResponse(res);
       if (res.ok) {
         localStorage.setItem("user", JSON.stringify(data.user));
         router.push(`/dashboard/${data.user.role}`);
       } else {
-        setLoginError(data.message || "Tài khoản hoặc mật khẩu không chính xác!");
+        setLoginError(data.message || data.error || "Tài khoản hoặc mật khẩu không chính xác!");
       }
     } catch (error) {
-      setLoginError("Lỗi kết nối đến máy chủ!");
+      setLoginError(
+        isTimeoutError(error)
+          ? "Máy chủ phản hồi quá lâu. Vui lòng thử lại sau ít phút."
+          : "Lỗi kết nối đến máy chủ!"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -52,21 +57,25 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await apiFetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: resetEmail }),
       });
 
-      const data = await res.json();
+      const data = await readApiResponse(res);
       if (res.ok) {
         setForgotMessage("Mã OTP đã được gửi đến email của bạn!");
         setTimeout(() => setViewMode('reset_password'), 1500); 
       } else {
-        setForgotError(data.message || "Không thể gửi email!");
+        setForgotError(data.message || data.error || "Không thể gửi email!");
       }
     } catch (error) {
-      setForgotError("Lỗi kết nối đến máy chủ!");
+      setForgotError(
+        isTimeoutError(error)
+          ? "Máy chủ phản hồi quá lâu. Vui lòng thử lại sau ít phút."
+          : "Lỗi kết nối đến máy chủ!"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -79,13 +88,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const res = await apiFetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: resetEmail, otp, newPassword }),
       });
 
-      const data = await res.json();
+      const data = await readApiResponse(res);
       if (res.ok) {
         setForgotMessage("Đổi mật khẩu thành công! Đang chuyển về đăng nhập...");
         setTimeout(() => {
@@ -95,10 +104,14 @@ export default function LoginPage() {
           setForgotMessage("");
         }, 2000);
       } else {
-        setForgotError(data.message || "Mã OTP sai hoặc đã hết hạn!");
+        setForgotError(data.message || data.error || "Mã OTP sai hoặc đã hết hạn!");
       }
     } catch (error) {
-      setForgotError("Lỗi kết nối đến máy chủ!");
+      setForgotError(
+        isTimeoutError(error)
+          ? "Máy chủ phản hồi quá lâu. Vui lòng thử lại sau ít phút."
+          : "Lỗi kết nối đến máy chủ!"
+      );
     } finally {
       setIsLoading(false);
     }

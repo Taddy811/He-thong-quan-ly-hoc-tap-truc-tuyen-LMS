@@ -2,6 +2,24 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 
+const sendMailWithTimeout = (transporter, mailOptions, timeoutMs = 15000) => {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Email send timeout'));
+    }, timeoutMs);
+
+    transporter.sendMail(mailOptions)
+      .then((result) => {
+        clearTimeout(timeout);
+        resolve(result);
+      })
+      .catch((error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+  });
+};
+
 const registerUser = async (req, res) => {
   try {
     const { name, username, email, phone, major, password, role } = req.body;
@@ -151,6 +169,9 @@ const forgotPassword = async (req, res) => {
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
       auth: {
         user: emailUser,
         pass: emailPass
@@ -175,10 +196,13 @@ const forgotPassword = async (req, res) => {
       `
     };
 
-    await transporter.sendMail(mailOptions);
+    await sendMailWithTimeout(transporter, mailOptions);
     res.status(200).json({ message: "Mã OTP đã được gửi về email đăng ký của bạn!" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Forgot password error:", error);
+    res.status(500).json({
+      message: "Không thể gửi mã OTP. Vui lòng kiểm tra cấu hình email trên server.",
+    });
   }
 };
 
@@ -204,7 +228,10 @@ const resetPassword = async (req, res) => {
 
     res.status(200).json({ message: "Đổi mật khẩu thành công! Hãy đăng nhập lại." });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Reset password error:", error);
+    res.status(500).json({
+      message: "Không thể đặt lại mật khẩu. Vui lòng thử lại sau.",
+    });
   }
 };
 

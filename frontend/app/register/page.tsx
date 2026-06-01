@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { apiFetch, isTimeoutError, readApiResponse } from "@/lib/api";
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
     name: "",
@@ -21,7 +22,7 @@ export default function RegisterPage() {
         return;
     }
     try {
-      const res = await fetch("/api/auth/register", {
+      const res = await apiFetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -34,7 +35,7 @@ export default function RegisterPage() {
         }),
       });
       
-      const data = await res.json();
+      const data = await readApiResponse(res);
       
       if (res.ok) {
         setMessage("🎉 " + data.message);
@@ -42,7 +43,11 @@ export default function RegisterPage() {
         setMessage("❌ " + (data.error ? `Lỗi chi tiết: ${data.error}` : data.message));
       }
     } catch (error) {
-      setMessage("❌ Lỗi mạng: Không thể kết nối với Backend!");
+      setMessage(
+        isTimeoutError(error)
+          ? "❌ Máy chủ phản hồi quá lâu. Vui lòng thử lại sau ít phút."
+          : "❌ Lỗi mạng: Không thể kết nối với Backend!"
+      );
     }
   };
 

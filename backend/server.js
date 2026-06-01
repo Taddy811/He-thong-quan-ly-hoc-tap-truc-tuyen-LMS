@@ -26,7 +26,10 @@ app.use('/api/instructor', instructorRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/user', userRoutes);
 // 3. Kết nối với nhà kho MongoDB
-mongoose.connect(process.env.MONGO_URI)
+mongoose.set('bufferTimeoutMS', 10000);
+mongoose.connect(process.env.MONGO_URI, {
+  serverSelectionTimeoutMS: 10000,
+})
   .then(() => console.log('✅ Kết nối MongoDB thành công!'))
   .catch((err) => console.log('❌ Lỗi kết nối MongoDB:', err));
 
