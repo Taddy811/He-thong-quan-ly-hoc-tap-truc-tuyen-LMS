@@ -2,11 +2,13 @@ const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const dns = require('node:dns');
 const instructorRoutes = require('./routes/instructorRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const userRoutes = require('./routes/userRoutes');
 // Tải các biến môi trường từ file .env
 dotenv.config();
+dns.setDefaultResultOrder('ipv4first');
 
 // Khởi tạo ứng dụng Express
 const app = express();
